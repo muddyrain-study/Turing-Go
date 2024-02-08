@@ -3,33 +3,36 @@ package main
 import "fmt"
 
 func main() {
-	//// 声明一个二维整型数组，两个维度的长度分别是 4 和 2
-	//var array [4][2]int
-	//// 使用数组字面量来声明并初始化一个二维整型数组
-	//array = [4][2]int{{10, 11}, {20, 21}, {30, 31}, {40, 41}}
-	//// 声明并初始化数组中索引为 1 和 3 的元素
-	//array = [4][2]int{1: {20, 21}, 3: {40, 41}}
-	//// 声明并初始化数组中指定的元素
-	//array = [4][2]int{1: {0: 20}, 3: {1: 41}}
-	//
-	//fmt.Println(array[1][0])
-	//
-	//for index, value := range array {
-	//	fmt.Printf("索引:%d,值:%d \n", index, value)
+	//var a = [3]int{1, 2, 3}
+	//fmt.Println(a, a[1:2])
+	//var highRiseBuilding [30]int
+	//for i := 0; i < 30; i++ {
+	//	highRiseBuilding[i] = i + 1
 	//}
+	//// 区间
+	//fmt.Println(highRiseBuilding[10:15])
+	//// 中间到尾部的所有元素
+	//fmt.Println(highRiseBuilding[20:])
+	//// 开头到中间指定位置的所有元素
+	//fmt.Println(highRiseBuilding[:2])
+	//highRiseBuilding[10:20][2] = 1111111
 
-	// 声明两个二维整型数组 [2]int [2]int
-	var array1 [2][2]int
-	var array2 [2][2]int
-	// 为array2的每个元素赋值
-	array2[0][0] = 10
-	array2[0][1] = 20
-	array2[1][0] = 30
-	array2[1][1] = 40
-	// 将 array2 的值复制给 array1
-	array1 = array2
+	// 声明字符串切片
+	var strList []string
+	// 声明整型切片
+	var numList []int
+	// 声明一个空切片
+	var numListEmpty = []int{}
+	// 输出3个切片
+	fmt.Println(strList, numList, numListEmpty)
+	// 输出3个切片大小
+	fmt.Println(len(strList), len(numList), len(numListEmpty))
+	// 切片判定空的结果
+	fmt.Println(strList == nil)
+	fmt.Println(numList == nil)
+	fmt.Println(numListEmpty == nil)
 
-	fmt.Println(array1)
-	fmt.Println(array2)
+	strList = append(strList, "哈哈哈")
+	fmt.Println(strList)
 
 }
