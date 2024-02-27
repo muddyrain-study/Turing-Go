@@ -1,14 +1,19 @@
 package main
 
+import "fmt"
+
 func length(s string) int {
 	println("call length.")
 	return len(s)
 }
 
 func main() {
-	s := "abcd"
-	// 这样写会多次调佣length函数
-	for i, n := 0, length(s); i < n; i++ {
-		println(i, s[i])
+	m := map[string]int{
+		"one": 1,
+		"two": 2,
+	}
+
+	for key, value := range m {
+		fmt.Println(key, value)
 	}
 }
