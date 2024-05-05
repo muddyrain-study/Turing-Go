@@ -1,11 +1,20 @@
 package main
 
+import "fmt"
+
+func Try(fun func(), handler func(interface{})) {
+	defer func() {
+		if err := recover(); err != nil {
+			handler(err)
+		}
+	}()
+	fun()
+}
+
 func main() {
-	var whatever = [5]int{1, 2, 3, 4, 5}
-	for i := 0; i < len(whatever); i++ {
-		i := i
-		defer func() {
-			println(i)
-		}()
-	}
+	Try(func() {
+		panic("test panic")
+	}, func(err interface{}) {
+		fmt.Println(err)
+	})
 }
