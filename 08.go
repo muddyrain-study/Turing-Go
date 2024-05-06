@@ -1,36 +1,27 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
-type Point struct {
-	x int
-	y int
+// 打印消息类型, 传入匿名结构体
+func printMsgType(msg *struct {
+	id   int
+	data string
+}) {
+	msg.id = 1
+	// 使用动词%T打印msg的类型
+	fmt.Printf("%T\n, msg:%v \n", msg, msg)
 }
-type Color struct {
-	r, g, b int
-}
-type Player struct {
-	Name        string
-	HealthPoint int
-	MagicPoint  int
-}
-
 func main() {
-	var p Point
-	p.x = 10
-	p.y = 20
-	fmt.Printf("p = %v, x=%d,y=%d \n", p, p.x, p.y)
-
-	var p1 = Point{
-		x: 10,
-		y: 20,
+	// 实例化一个匿名结构体
+	msg := &struct { // 定义部分
+		id   int
+		data string
+	}{ // 值初始化部分
+		1024,
+		"hello",
 	}
-	fmt.Printf("p1 = %v, x=%d,y=%d \n", p1, p1.x, p1.y)
-
-	tank := new(Player)
-	(*tank).Name = "Canon"
-	tank.HealthPoint = 300
-	tank.MagicPoint = 100
-
-	fmt.Println(tank)
+	printMsgType(msg)
+	fmt.Println(msg)
 }
