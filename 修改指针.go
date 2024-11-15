@@ -1,30 +1,23 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 )
-
-var mode = flag.String("mode", "", "运行模式可以设置为fast")
 
 func main() {
 	//var num = 10
 	//modifyFromPoint(num)
 	//println("num的值为：", num)
 	//
-	//var num2 = 22
-	//newModifyFromPoint2(&num2)
-	//println("num2的值为：", num2)
+	//newModifyFromPoint2(&num)
+	//println("num的值为：", num)
 
-	//ptr := new(int)
-	//*ptr = 100
-	//fmt.Println(ptr)
-	//fmt.Println(*ptr)
+	var ptr *string = new(string)
 
-	// 解析命令行参数
-	flag.Parse()
-	// 输出命令行参数
-	fmt.Printf("运行模式为: %s", *mode)
+	*ptr = "吗喽之路GO教程"
+
+	fmt.Printf("%s", *ptr)
+
 }
 
 func modifyFromPoint(num int) {

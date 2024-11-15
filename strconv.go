@@ -6,23 +6,24 @@ import (
 )
 
 func main() {
-	newStr1 := "1"
-	intValue, _ := strconv.Atoi(newStr1)
-	println(intValue)
+	newStr := "1"
 
-	newStr2 := 2
+	intValue, _ := strconv.Atoi(newStr)
 
-	intValue2 := strconv.Itoa(newStr2)
-	fmt.Printf("%T %v \n", intValue2, intValue2)
+	fmt.Println(intValue)
 
-	// string 转 float
-	newStr3 := "3.1415926"
-	floatValue, _ := strconv.ParseFloat(newStr3, 64)
-	fmt.Printf("%T %v \n", floatValue, floatValue)
+	newInt := 1
 
-	// float 转 string
-	newStr4 := 3.1415926
-	floatValue2 := strconv.FormatFloat(newStr4, 'f', 2, 64)
-	fmt.Printf("%T %v \n", floatValue2, floatValue2)
+	strValue := strconv.Itoa(newInt)
+	fmt.Printf("%T = %v \n", strValue, strValue)
+
+	// string to float
+	newStr2 := "1.234"
+	parseFloatValue, _ := strconv.ParseFloat(newStr2, 64)
+	fmt.Printf("%T = %v \n", parseFloatValue, parseFloatValue)
+	// float to string
+	floatValue := 1.234
+	parseStringValue := strconv.FormatFloat(floatValue, 'f', -1, 64)
+	fmt.Printf("%T = %v \n", parseStringValue, parseStringValue)
 
 }
