@@ -1,23 +1,19 @@
 package main
 
 import (
-	"log"
-	"strings"
+	"fmt"
 )
 
 func main() {
-	s := "Hello,码神之路Java教程"
-	source := "Java"
-	target := "Go"
-
-	index := strings.Index(s, "Java")
-	sourceLen := len(source)
-
-	start := s[:index]
-	log.Default().Println(start)
-	end := s[index+sourceLen:]
-	log.Default().Println(end)
-
-	s = start + target + end
-	log.Default().Println(s)
+	// 实例化玩家对象，并设速度为0.5
+	p := NewPlayer(0.5)
+	// 让玩家移动到3,1点
+	p.MoveTo(Vec2{3, 1})
+	// 如果没有到达就一直循环
+	for !p.IsArrived() {
+		// 更新玩家位置
+		p.Update()
+		// 打印每次移动后的玩家位置
+		fmt.Println(p.Pos())
+	}
 }
