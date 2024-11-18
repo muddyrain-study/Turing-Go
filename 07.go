@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 func Try(fun func(), handler func(interface{})) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -24,18 +22,49 @@ func main() {
 	//	println(i, i2)
 	//}
 
-	p1 := player()
-	p2 := player()
-	fmt.Println(p1())
-	fmt.Println(p1())
-	fmt.Println(p1())
+	//p1 := player()
+	//p2 := player()
+	//fmt.Println(p1())
+	//fmt.Println(p1())
+	//fmt.Println(p1())
+	//
+	//fmt.Println(p2())
 
-	fmt.Println(p2())
+	//start := time.Now()
+	//fmt.Println(start)
+
+	//defer func() {
+	//	fmt.Println("defer1")
+	//	if err := recover(); err != nil {
+	//		println("1", err.(string))
+	//	}
+	//}()
+	//
+	//defer func() {
+	//	fmt.Println("defer2")
+	//	if err := recover(); err != nil {
+	//		println("2", err.(string))
+	//	}
+	//}()
+	//panic("test panic")
+	try(func() {
+		panic("test panic")
+	}, func(err interface{}) {
+		println(err.(string))
+	})
 }
 
-//func a(s []int) {
-//	s[0] = 100
-//}
+func try(fun func(), handler func(interface{})) {
+	defer func() {
+		if err := recover(); err != nil {
+			handler(err)
+		}
+	}()
+	fun()
+}
+func a(s []int) {
+	s[0] = 100
+}
 
 func player() func() int {
 	hp := 30

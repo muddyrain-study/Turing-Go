@@ -2,47 +2,71 @@ package main
 
 import "fmt"
 
-type Bag struct {
-	items []int
-}
-
-func (b *Bag) Add(item int) {
-	b.items = append(b.items, item)
-}
-
-type Property struct {
-	Value int
-}
-
-func (p *Property) GetValue() int {
-	return p.Value
-}
-func (p *Property) SetValue(v int) {
-	p.Value = v
+type Color struct {
+	R, G, B int
 }
 
 type Point struct {
 	x int
 	y int
 }
-
-func (p Point) Add(other Point) Point {
-	return Point{p.x + other.x, p.y + other.y}
+type Player struct {
+	Name        string
+	HealthPoint int
+	MagicPoint  int
 }
+type Command struct {
+	Name    string
+	varRef  *int
+	Comment string
+}
+
 func main() {
-	b := new(Bag)
-	b.Add(1)
-	b.Add(2)
+	//color := Color{255, 0, 0}
+	//
+	//println(color.R, color.G, color.B)
+	//
+	//point := Point{
+	//	x: 1,
+	//	y: 2,
+	//}
+	//
+	//println(point.x, point.y)
+	//
+	//p := new(Player)
+	//
+	//(*p).Name = "zhang3"
+	//(*p).HealthPoint = 100
+	//(*p).MagicPoint = 200
+	//
+	//println(p)
+	//var newVersion *int
+	//cmd := newCommand("cmd", newVersion, "this is a command")
+	//println((cmd))
 
-	fmt.Println(b.items)
+	msg := struct {
+		id   int
+		data string
+	}{
+		1024,
+		"hello",
+	}
+	printMsgType(&msg)
+	fmt.Printf("1: %T , %v", msg, msg)
+}
 
-	p := Property{Value: 1}
-	fmt.Println(p.GetValue())
-	p.SetValue(2)
-	fmt.Println(p.GetValue())
+func printMsgType(msg *struct {
+	id   int
+	data string
+}) {
+	msg.id = 2048
+	fmt.Printf("2: %T , %v", msg, msg)
+}
 
-	p1 := Point{1, 2}
-	p2 := Point{2, 3}
-	p3 := p1.Add(p2)
-	fmt.Println(p3)
+func newCommand(name string, varRef *int, comment string) *Command {
+	return &Command{
+		Name:    name,
+		varRef:  varRef,
+		Comment: comment,
+	}
 }
