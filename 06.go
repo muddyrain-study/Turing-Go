@@ -7,20 +7,28 @@ import (
 )
 
 func main() {
-	err := firstCheckError()
-	if err != nil {
-		fmt.Println(err)
-		goto onExit
+	//err := firstCheckError()
+	//if err != nil {
+	//	fmt.Println(err)
+	//	goto onExit
+	//}
+	//err = secondCheckError()
+	//if err != nil {
+	//	fmt.Println(err)
+	//	goto onExit
+	//}
+	//fmt.Println("done")
+	//return
+	//onExit:
+	//	exitProcess()
+	m := map[string]int{
+		"one": 1,
+		"two": 2,
 	}
-	err = secondCheckError()
-	if err != nil {
-		fmt.Println(err)
-		goto onExit
+
+	for s, i := range m {
+		fmt.Println(s, i)
 	}
-	fmt.Println("done")
-	return
-onExit:
-	exitProcess()
 }
 
 func secondCheckError() interface{} {
