@@ -1,30 +1,21 @@
 package main
 
-import (
-	"fmt"
-	"io"
-	"os"
-)
+import "os"
 
-func main() {
-	file, err := os.Open("./main.go")
+func write() {
+	err := os.WriteFile("./yyy.txt", []byte("你好，世界"), 0666)
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
-	var content []byte
-	for {
-		buf := make([]byte, 128)
-		n, err := file.Read(buf[:])
-		if err == io.EOF {
-			// 读取到文件末尾
-			break
-		}
-		if err != nil {
-			fmt.Println("read file err", err)
-			return
-		}
-		content = append(content, buf[:n]...)
+}
+func read() {
+	content, err := os.ReadFile("./yyy.txt")
+	if err != nil {
+		panic(err)
 	}
-	fmt.Println(string(content))
+	println(string(content))
+}
+func main() {
+	write()
+	read()
 }
