@@ -1,50 +1,43 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"sync"
-	"time"
+	"net"
 )
 
-var (
-	x      int64
-	wg     sync.WaitGroup
-	lock   sync.Mutex
-	rwlock sync.RWMutex
-)
+var wrapperPath = "/Users/qiushunmeng/Movies/GoLang/课程资料/"
 
-func write() {
-	//lock.Lock() // 加互斥锁
-	rwlock.Lock() // 加写锁
-	x = x + 1
-	time.Sleep(10 * time.Millisecond) // 假设写操作耗时10毫秒
-	rwlock.Unlock()                   // 解写锁
-	//lock.Unlock() // 解互斥锁
-	wg.Done()
+func process(conn net.Conn) {
+	defer conn.Close() // 关闭连接
+	for {
+		reader := bufio.NewReader(conn)
+		var buf [128]byte
+		n, err := reader.Read(buf[:])
+		if err != nil {
+			fmt.Println("read from client failed, err:", err)
+			break
+		}
+		receiveStr := string(buf[:n])
+		fmt.Println("收到client端发来的数据：", receiveStr)
+		// 读取文件内容
+		conn.Write([]byte(receiveStr))
+	}
 }
-
-func read() {
-	//lock.Lock() // 加互斥锁
-	rwlock.RLock()               // 加读锁
-	time.Sleep(time.Millisecond) // 假设读操作耗时1毫秒
-	rwlock.RUnlock()             // 解读锁
-	//lock.Unlock() // 解互斥锁
-	wg.Done()
-}
-
 func main() {
-	start := time.Now()
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go write()
+	listen, err := net.Listen("tcp", "127.0.0.1:20000")
+	if err != nil {
+		fmt.Println("listen failed, err:", err)
+		return
+	}
+	for {
+		conn, err := listen.Accept()
+		if err != nil {
+			fmt.Println("accept failed, err:", err)
+			continue
+		}
+		go process(conn)
+
 	}
 
-	for i := 0; i < 1000; i++ {
-		wg.Add(1)
-		go read()
-	}
-
-	wg.Wait()
-	end := time.Now()
-	fmt.Println(end.Sub(start))
 }
