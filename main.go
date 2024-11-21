@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"time"
@@ -71,14 +72,37 @@ func query(id int) (*User, error) {
 	return user, nil
 }
 
-func main() {
-	defer DB.Close()
-
-	//save("test", "男", "123@qq.com")
-	user, err := query(2)
+func update(id int, username string) {
+	res, err := DB.Exec("update user set username = ? where user_id = ?", username, id)
 	if err != nil {
-		log.Println("query data error:", err)
+		log.Println("update data error:", err)
 		return
 	}
-	log.Println("query success, user:", user)
+	num, _ := res.RowsAffected()
+	log.Println("update success, num:", num)
+}
+func insertTx(username string) {
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Println("begin tx error:", err)
+		return
+	}
+	res, err := tx.Exec("insert into user (username,sex,email) values (?,?,?)", username, "男", "456@qq.com")
+	if err != nil {
+		log.Println("insert data error:", err)
+		tx.Rollback()
+		return
+	}
+	if username == "tx" {
+		log.Println("rollback")
+		tx.Rollback()
+		return
+	}
+	id, _ := res.LastInsertId()
+	fmt.Println("insert success, id:", id)
+	_ = tx.Commit()
+}
+func main() {
+	defer DB.Close()
+	insertTx("tx")
 }
