@@ -46,8 +46,39 @@ func save(username string, sex string, email string) {
 	log.Println("insert success, id:", id)
 }
 
+type User struct {
+	UserId   int    `db:"user_id"`
+	Username string `db:"username"`
+	Sex      string `db:"sex"`
+	Email    string `db:"email"`
+}
+
+func query(id int) (*User, error) {
+	rows, err := DB.Query("select * from user where user_id = ? limit 1", id)
+	if err != nil {
+		log.Println("query data error:", err)
+		return nil, err
+	}
+	user := new(User)
+	for rows.Next() {
+		err = rows.Scan(&user.UserId, &user.Username, &user.Sex, &user.Email)
+		if err != nil {
+			log.Println("scan data error:", err)
+			return nil, err
+		}
+
+	}
+	return user, nil
+}
+
 func main() {
 	defer DB.Close()
 
-	save("test", "男", "123@qq.com")
+	//save("test", "男", "123@qq.com")
+	user, err := query(2)
+	if err != nil {
+		log.Println("query data error:", err)
+		return
+	}
+	log.Println("query success, user:", user)
 }
