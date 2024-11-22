@@ -1,41 +1,39 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 )
 
-func check(s string) (string, error) {
-	e := &MyError{}
-	if s == "" {
-		return "", e.Fail(400, "s is empty")
-	} else {
-		return s, e.Success()
-	}
-}
-
-type MyError struct {
-	Code int
-	Msg  string
-}
-
-func (e MyError) Error() string {
-	return e.Msg
-}
-func (e MyError) Fail(code int, msg string) MyError {
-	e.Code = code
-	e.Msg = msg
-	return e
-}
-func (e MyError) Success() MyError {
-	e.Code = 200
-	e.Msg = "success"
-	return e
-}
 func main() {
-	s, err := check("")
-	if err != nil {
-		fmt.Printf("err: %v\n,code: %v ", err.Error(), err.(MyError).Code)
-	} else {
-		fmt.Printf("s: %v\n", s)
+	data := "123456789"
+	//通过[]byte创建Reader
+	re := bytes.NewReader([]byte(data))
+
+	buf := make([]byte, 2)
+
+	re.Seek(0, 0)
+	//设置偏移量
+	for {
+		//一个字节一个字节的读
+		b, err := re.ReadByte()
+		if err != nil {
+			break
+		}
+		fmt.Println(string(b))
 	}
+	fmt.Println("----------------")
+
+	re.Seek(0, 0)
+	off := int64(0)
+	for {
+		//指定偏移量读取
+		n, err := re.ReadAt(buf, off)
+		if err != nil {
+			break
+		}
+		off += int64(n)
+		fmt.Println(off, string(buf[:n]))
+	}
+
 }
