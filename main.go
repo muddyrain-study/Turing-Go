@@ -1,20 +1,41 @@
 package main
 
 import (
-	"log"
-	"os"
+	"fmt"
 )
 
-var logger *log.Logger
-
-func init() {
-	logFile, err := os.OpenFile("test.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	if err != nil {
-		log.Panic("打开日志文件异常")
+func check(s string) (string, error) {
+	e := &MyError{}
+	if s == "" {
+		return "", e.Fail(400, "s is empty")
+	} else {
+		return s, e.Success()
 	}
-	logger = log.New(logFile, "[Mylog]", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
+type MyError struct {
+	Code int
+	Msg  string
+}
+
+func (e MyError) Error() string {
+	return e.Msg
+}
+func (e MyError) Fail(code int, msg string) MyError {
+	e.Code = code
+	e.Msg = msg
+	return e
+}
+func (e MyError) Success() MyError {
+	e.Code = 200
+	e.Msg = "success"
+	return e
+}
 func main() {
-	logger.Println("自定义logger")
+	s, err := check("")
+	if err != nil {
+		fmt.Printf("err: %v\n,code: %v ", err.Error(), err.(MyError).Code)
+	} else {
+		fmt.Printf("s: %v\n", s)
+	}
 }
