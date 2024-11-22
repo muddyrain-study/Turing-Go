@@ -1,2 +1,0 @@
-go test fuzz v1
-string("The qn%fox%juwn fox jump\xeb over 5he lazy dog")
