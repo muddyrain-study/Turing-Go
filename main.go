@@ -1,27 +1,29 @@
 package main
 
 import (
-	"encoding/json"
-	"os"
+	"fmt"
+	"sort"
 )
 
-type Person struct {
-	Name   string   `json:"name"`
-	Age    int      `json:"age"`
-	Email  string   `json:"email"`
-	Parent []string `json:"parent"`
+type People struct {
+	Name string
+	Age  int
 }
 
-func main() {
-	p := Person{
-		Name:   "zhangsan",
-		Age:    20,
-		Email:  "zhangsan@mail.com",
-		Parent: []string{"Daddy", "Mom"},
-	}
-	f, _ := os.OpenFile("test.json", os.O_WRONLY, 077)
-	defer f.Close()
+type testSlice []People
 
-	d := json.NewEncoder(f)
-	d.Encode(p)
+func (l testSlice) Len() int           { return len(l) }
+func (l testSlice) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
+func (l testSlice) Less(i, j int) bool { return l[i].Age < l[j].Age }
+
+func main() {
+	ls := testSlice{
+		{Name: "n1", Age: 12},
+		{Name: "n2", Age: 11},
+		{Name: "n3", Age: 10},
+	}
+
+	fmt.Println(ls)
+	sort.Sort(ls)
+	fmt.Println(ls)
 }
