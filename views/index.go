@@ -2,43 +2,32 @@ package views
 
 import (
 	"Turing-Go/common"
-	"Turing-Go/config"
-	"Turing-Go/models"
+	"Turing-Go/service"
+	"errors"
+	"log"
 	"net/http"
+	"strconv"
 )
 
 func (receiver HTMLApi) Index(w http.ResponseWriter, r *http.Request) {
 	r.Header.Set("Content-Type", "text/html")
-	var homeData = new(models.HomeResponse)
-	//页面上涉及到的所有的数据，必须有定义
-	var categorys = []models.Category{
-		{
-			Cid:  1,
-			Name: "go",
-		},
-	}
-	var posts = []models.PostMore{
-		{
-			Pid:          1,
-			Title:        "go博客",
-			Content:      "内容",
-			UserName:     "张三",
-			ViewCount:    123,
-			CreateAt:     "2022-02-20",
-			CategoryId:   1,
-			CategoryName: "go",
-			Type:         0,
-		},
-	}
-	homeData = &models.HomeResponse{
-		Viewer:    config.Cfg.Viewer,
-		Categorys: categorys,
-		Posts:     posts,
-		Total:     1,
-		Page:      1,
-		Pages:     []int{1},
-		PageEnd:   true,
-	}
 	index := common.Template.Index
+	if err := r.ParseForm(); err != nil {
+		log.Println("解析请求参数失败", err)
+		index.WriteError(w, errors.New("系统错误，请联系管理员！"))
+		return
+	}
+	pageString := r.Form.Get("page")
+	page := 1
+	if pageString != "" {
+		page, _ = strconv.Atoi(pageString)
+	}
+	pageSize := 10
+	homeData, err := service.GetAllIndexInfo(page, pageSize)
+
+	if err != nil {
+		log.Println("获取首页数据失败", err)
+		index.WriteError(w, errors.New("系统错误，请联系管理员！"))
+	}
 	index.WriteData(w, homeData)
 }
