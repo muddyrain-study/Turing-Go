@@ -4,7 +4,7 @@ import "time"
 
 type User struct {
 	Uid      int       `json:"uid"`
-	UserName string    `json:"userName"`
+	UserName string    `json:"user_name"`
 	Password string    `json:"passwd"`
 	Avatar   string    `json:"avatar"`
 	CreateAt time.Time `json:"create_at"`

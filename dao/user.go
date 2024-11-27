@@ -6,7 +6,7 @@ import (
 )
 
 func GetUserNameById(id int) (string, error) {
-	row := DB.QueryRow("select userName from blog_user where uid = ?", id)
+	row := DB.QueryRow("select user_name from blog_user where uid = ?", id)
 
 	if row.Err() != nil {
 		log.Println("blog_user表查询失败", row.Err())
@@ -19,7 +19,6 @@ func GetUserNameById(id int) (string, error) {
 
 func GetUser(userName, passwd string) (*models.User, error) {
 	row := DB.QueryRow("select * from blog_user where user_name = ? and passwd = ? limit 1", userName, passwd)
-
 	if row.Err() != nil {
 		log.Println("blog_user表查询失败", row.Err())
 		return nil, nil
