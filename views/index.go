@@ -10,7 +10,7 @@ import (
 )
 
 func (receiver HTMLApi) Index(w http.ResponseWriter, r *http.Request) {
-	r.Header.Set("Content-Type", "text/html")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	index := common.Template.Index
 	if err := r.ParseForm(); err != nil {
 		log.Println("解析请求参数失败", err)
