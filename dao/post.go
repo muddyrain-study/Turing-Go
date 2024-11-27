@@ -38,3 +38,10 @@ func GetPostPage(page, pageSize int) ([]models.Post, error) {
 	}
 	return posts, nil
 }
+
+func CountGetAllPost() int {
+	rows := DB.QueryRow("select count(1) from blog_post")
+	var count int
+	_ = rows.Scan(&count)
+	return count
+}

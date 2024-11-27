@@ -45,14 +45,20 @@ func GetAllIndexInfo(page int, pageSize int) (*models.HomeResponse, error) {
 		}
 		postMores = append(postMores, postMore)
 	}
+	total := dao.CountGetAllPost()
+	pagesCount := (total-1)/pageSize + 1
+	var pages []int
+	for i := 0; i < pagesCount; i++ {
+		pages = append(pages, i+1)
+	}
 	homeData := &models.HomeResponse{
 		Viewer:    config.Cfg.Viewer,
 		Categorys: categorys,
 		Posts:     postMores,
-		Total:     1,
-		Page:      1,
-		Pages:     []int{1},
-		PageEnd:   true,
+		Total:     total,
+		Page:      page,
+		Pages:     pages,
+		PageEnd:   page != pagesCount,
 	}
 
 	return homeData, nil
