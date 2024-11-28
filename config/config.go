@@ -1,51 +1,37 @@
 package config
 
 import (
-	"github.com/BurntSushi/toml"
+	"github.com/Unknwon/goconfig"
+	"log"
 	"os"
 )
 
-type TomlConfig struct {
-	Viewer Viewer
-	System SystemConfig
-}
+var File *goconfig.ConfigFile
 
-type Viewer struct {
-	Title       string
-	Description string
-	Logo        string
-	Navigation  []string
-	Bilibili    string
-	Avatar      string
-	UserName    string
-	UserDesc    string
-}
-type SystemConfig struct {
-	AppName         string
-	Version         float32
-	CurrentDir      string
-	CdnURL          string
-	QiniuAccessKey  string
-	QiniuSecretKey  string
-	Valine          bool
-	ValineAppid     string
-	ValineAppkey    string
-	ValineServerURL string
-}
-
-var Cfg *TomlConfig
+const confFile = "/conf/conf.ini"
 
 func init() {
-	Cfg = new(TomlConfig)
-	var err error
-	Cfg.System.CurrentDir, err = os.Getwd()
+	currentDir, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	Cfg.System.AppName = "ms-go-blog"
-	Cfg.System.Version = 1.0
-	_, err = toml.DecodeFile("config/config.toml", &Cfg)
-	if err != nil {
-		panic(err)
+	configPath := currentDir + confFile
+	if !fileExist(configPath) {
+		panic("Config file not found: " + configPath)
 	}
+	len := len(os.Args)
+	if len > 1 {
+		dir := os.Args[1]
+		if dir != "" {
+			configPath = dir + confFile
+		}
+	}
+	File, err = goconfig.LoadConfigFile(configPath)
+	if err != nil {
+		log.Fatal("Error loading configuration file: " + err.Error())
+	}
+}
+func fileExist(fileName string) bool {
+	_, err := os.Stat(fileName)
+	return err == nil || os.IsExist(err)
 }
