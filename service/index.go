@@ -7,14 +7,22 @@ import (
 	"html/template"
 )
 
-func GetAllIndexInfo(page int, pageSize int) (*models.HomeResponse, error) {
+func GetAllIndexInfo(slug string, page int, pageSize int) (*models.HomeResponse, error) {
 
 	//页面上涉及到的所有的数据，必须有定义
 	categorys, err := dao.GetAllCategory()
 	if err != nil {
 		return nil, err
 	}
-	posts, err := dao.GetPostPage(page, pageSize)
+	var posts []models.Post
+	var total int
+	if slug == "" {
+		posts, err = dao.GetPostPage(page, pageSize)
+		total = dao.CountGetAllPost()
+	} else {
+		posts, err = dao.GetPostPageBySlug(slug, page, pageSize)
+		total = dao.CountGetAllPostBySlug(slug)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +53,7 @@ func GetAllIndexInfo(page int, pageSize int) (*models.HomeResponse, error) {
 		}
 		postMores = append(postMores, postMore)
 	}
-	total := dao.CountGetAllPost()
+
 	pagesCount := (total-1)/pageSize + 1
 	var pages []int
 	for i := 0; i < pagesCount; i++ {

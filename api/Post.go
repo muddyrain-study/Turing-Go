@@ -29,6 +29,21 @@ func (receiver Api) GetPost(w http.ResponseWriter, r *http.Request) {
 	common.Success(w, post)
 }
 
+func (receiver Api) SearchPost(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		common.Error(w, errors.New("parse form error"))
+		return
+	}
+	condition := r.Form.Get("val")
+	searchResp, err := service.SearchPost(condition)
+	if err != nil {
+		common.Error(w, errors.New("search post error"))
+		return
+	}
+	common.Success(w, searchResp)
+}
+
 func (receiver Api) SaveAndUpdatePost(w http.ResponseWriter, r *http.Request) {
 	token := r.Header.Get("Authorization")
 	_, claims, err := utils.ParseToken(token)

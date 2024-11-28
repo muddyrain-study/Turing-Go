@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func (receiver HTMLApi) Index(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +24,10 @@ func (receiver HTMLApi) Index(w http.ResponseWriter, r *http.Request) {
 		page, _ = strconv.Atoi(pageString)
 	}
 	pageSize := 10
-	homeData, err := service.GetAllIndexInfo(page, pageSize)
+
+	path := r.URL.Path
+	slug := strings.TrimPrefix(path, "/")
+	homeData, err := service.GetAllIndexInfo(slug, page, pageSize)
 
 	if err != nil {
 		log.Println("获取首页数据失败", err)
