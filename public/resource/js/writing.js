@@ -37,7 +37,7 @@ function initEditor() {
 function uploadImage(file, cb) {
   const config = {
     useCdnDomain: true,
-    region: qiniu.region.z1
+    region: qiniu.region.z0
   };
   const putExtra = {
   };
@@ -49,7 +49,7 @@ function uploadImage(file, cb) {
     success: function (res) {
       if (res.code !== 200) return alert(res.error);
       const token = res.data;
-      const observable = qiniu.upload(file, "goblog/upload/"+Date.now() + "_" + file.name, token, putExtra, config)
+      const observable = qiniu.upload(file, "muddyrain/upload/"+Date.now() + "_" + file.name, token, putExtra, config)
       const observer = {
         next(res){
           // ...
