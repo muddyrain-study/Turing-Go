@@ -6,6 +6,7 @@ import (
 	"Turing-Go/models"
 	"fmt"
 	"html/template"
+	"log"
 )
 
 func GetPostDetailById(pid int) (*models.PostRes, error) {
@@ -40,4 +41,21 @@ func GetPostDetailById(pid int) (*models.PostRes, error) {
 	}
 
 	return postRes, nil
+}
+
+func Writing() (wr models.WritingRes) {
+	wr.Title = config.Cfg.Viewer.Title
+	wr.CdnURL = config.Cfg.System.CdnURL
+	category, err := dao.GetAllCategory()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	wr.Categorys = category
+
+	return
+}
+
+func SavePost(post *models.Post) {
+	dao.SavePost(post)
 }

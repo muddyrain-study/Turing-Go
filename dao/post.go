@@ -113,3 +113,28 @@ func GetPostById(pid int) (*models.Post, error) {
 	}
 	return &post, nil
 }
+
+func SavePost(post *models.Post) {
+	log.Println("post", post)
+	res, err := DB.Exec(
+		"insert into blog_post(title, content, markdown, category_id, user_id, view_count, type, slug, createAt, updateAt)"+
+			" values(?,?,?,?,?,?,?,?,?,?)",
+		post.Title,
+		post.Content,
+		post.Markdown,
+		post.CategoryId,
+		post.UserId,
+		post.ViewCount,
+		post.Type,
+		post.Slug,
+		post.CreateAt.Format("2006-01-02 15:04:05"),
+		post.UpdateAt.Format("2006-01-02 15:04:05"),
+	)
+	if err != nil {
+		log.Println("blog_post表插入失败", err)
+		return
+	}
+	pid, _ := res.LastInsertId()
+	log.Println("pid", pid)
+	post.Pid = int(pid)
+}
