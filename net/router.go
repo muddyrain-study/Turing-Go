@@ -1,6 +1,8 @@
 package net
 
-import "strings"
+import (
+	"strings"
+)
 
 type Handler func(req *WsMsgReq, resp *WsMsgResp)
 
@@ -20,7 +22,8 @@ func (g *group) AddRouter(name string, h Handler) {
 }
 func (r *Router) Group(prefix string) *group {
 	g := &group{
-		prefix: prefix,
+		prefix:     prefix,
+		handlerMap: map[string]Handler{},
 	}
 
 	r.group = append(r.group, g)

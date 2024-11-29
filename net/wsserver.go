@@ -3,6 +3,7 @@ package net
 import (
 	"Turing-Go/utils"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/forgoer/openssl"
 	"github.com/gorilla/websocket"
@@ -42,6 +43,8 @@ func (w *wsServer) GetProperty(key string) (interface{}, error) {
 	defer w.propertyLock.RUnlock()
 	if v, ok := w.property[key]; ok {
 		return v, nil
+	} else {
+		return nil, errors.New("no property found")
 	}
 	return nil, nil
 }
@@ -75,7 +78,25 @@ func (w *wsServer) writeMsgLoop() {
 	for {
 		select {
 		case msg := <-w.outChan:
-			fmt.Println("writeMsgLoop: ", msg)
+			w.Write(msg)
+		}
+	}
+}
+
+func (w *wsServer) Write(msg *WsMsgResp) {
+	fmt.Println("writeMsgLoop: ", msg)
+	data, err := json.Marshal(msg.Body)
+	if err != nil {
+		log.Println(err)
+	}
+	secretKey, err := w.GetProperty("secretKey")
+	if err == nil {
+		key := secretKey.(string)
+		data, _ = utils.AesCBCEncrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING)
+	}
+	if data, err := utils.Zip(data); err == nil {
+		if err := w.wsConn.WriteMessage(websocket.BinaryMessage, data); err != nil {
+			w.Close()
 		}
 	}
 }
@@ -94,7 +115,6 @@ func (w *wsServer) readMsgLoop() {
 			break
 		}
 		log.Println("before unzip", data)
-		log.Printf("w %+v\n", w)
 		data, err = utils.UnZip(data)
 		if err != nil {
 			log.Println("Failed to unzip data: ", err)
@@ -108,7 +128,7 @@ func (w *wsServer) readMsgLoop() {
 			if err != nil {
 				log.Println("Failed to decrypt data: ", err)
 				//continue
-				// w.HandHake()
+				w.Handshake()
 			} else {
 				data = d
 			}
@@ -139,5 +159,33 @@ func (w *wsServer) Close() {
 	err := w.wsConn.Close()
 	if err != nil {
 		log.Println("Failed to close websocket connection: ", err)
+	}
+}
+
+const handshakeMsg = "handshake"
+
+func (w *wsServer) Handshake() {
+	secretKey := ""
+	key, err := w.GetProperty("secretKey")
+	if err == nil {
+		secretKey = key.(string)
+	} else {
+		secretKey = utils.RandSeq(16)
+	}
+	handshake := &Handshake{Key: secretKey}
+	body := &RespBody{
+		Name: handshakeMsg,
+		Msg:  handshake,
+	}
+
+	if data, err := json.Marshal(body); err == nil {
+		if secretKey != "" {
+			w.SetProperty("secretKey", secretKey)
+		} else {
+			w.RemoveProperty("secretKey")
+		}
+		if data, err := utils.Zip(data); err == nil {
+			w.wsConn.WriteMessage(websocket.BinaryMessage, data)
+		}
 	}
 }

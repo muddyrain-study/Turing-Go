@@ -7,7 +7,7 @@ import (
 
 var Router = net.NewRouter()
 
-func init() {
+func Init() {
 	initRouter()
 }
 
