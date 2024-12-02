@@ -1,6 +1,7 @@
 package login
 
 import (
+	"Turing-Go/db"
 	"Turing-Go/net"
 	"Turing-Go/server/login/controller"
 )
@@ -8,6 +9,7 @@ import (
 var Router = net.NewRouter()
 
 func Init() {
+	db.TestDB()
 	initRouter()
 }
 

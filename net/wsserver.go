@@ -104,7 +104,7 @@ func (w *wsServer) Write(msg *WsMsgResp) {
 func (w *wsServer) readMsgLoop() {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Println("writeMsgLoop panic: ", r)
+			log.Println("readMsgLoop panic: ", r)
 			w.Close()
 		}
 	}()
@@ -114,13 +114,11 @@ func (w *wsServer) readMsgLoop() {
 			log.Println("read message error: ", err)
 			break
 		}
-		log.Println("before unzip", data)
 		data, err = utils.UnZip(data)
 		if err != nil {
 			log.Println("Failed to unzip data: ", err)
 			continue
 		}
-		log.Println("after unzip", data)
 		secretKey, err := w.GetProperty("secretKey")
 		if err == nil {
 			key := secretKey.(string)
@@ -141,12 +139,7 @@ func (w *wsServer) readMsgLoop() {
 		} else {
 			log.Println("body: ", body)
 			req := &WsMsgReq{Conn: w, Body: body}
-			resp := &WsMsgResp{
-				Body: &RespBody{
-					Name: body.Name,
-					Seq:  req.Body.Seq,
-				},
-			}
+			resp := &WsMsgResp{Body: &RespBody{Name: body.Name, Seq: req.Body.Seq}}
 			w.router.Run(req, resp)
 			w.outChan <- resp
 		}
