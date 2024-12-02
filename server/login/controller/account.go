@@ -6,6 +6,7 @@ import (
 	"Turing-Go/net"
 	"Turing-Go/server/login/model"
 	"Turing-Go/server/login/proto"
+	"Turing-Go/server/models"
 	"Turing-Go/utils"
 	"fmt"
 	"github.com/mitchellh/mapstructure"
@@ -30,7 +31,7 @@ func (a *Account) login(req *net.WsMsgReq, resp *net.WsMsgResp) {
 	if err != nil {
 		log.Println("login mapstructure.Decode error:", err)
 	}
-	var user model.User
+	var user models.User
 	fmt.Println(db.Engine)
 	ok, err := db.Engine.Table(user).Where("username=?", loginReq.Username).Get(&user)
 
@@ -97,5 +98,5 @@ func (a *Account) login(req *net.WsMsgReq, resp *net.WsMsgResp) {
 		}
 	}
 	//缓存一下 此用户和当前的ws连接
-	//net.Mgr.UserLogin(req.Conn,user.UId,token)
+	net.Mgr.UserLogin(req.Conn, user.UId, token)
 }

@@ -57,7 +57,6 @@ func (w *wsServer) Addr() string {
 	return w.wsConn.RemoteAddr().String()
 }
 func (w *wsServer) Push(name string, data interface{}) {
-
 	resp := &WsMsgResp{
 		Body: &RespBody{
 			Name: name,
