@@ -15,6 +15,11 @@ func (g *group) exec(name string, req *WsMsgReq, resp *WsMsgResp) {
 	h := g.handlerMap[name]
 	if h != nil {
 		h(req, resp)
+	} else {
+		h = g.handlerMap["*"]
+		if h != nil {
+			h(req, resp)
+		}
 	}
 }
 func (g *group) AddRouter(name string, h Handler) {
@@ -49,7 +54,8 @@ func (r *Router) Run(req *WsMsgReq, resp *WsMsgResp) {
 	for _, g := range r.group {
 		if g.prefix == prefix {
 			g.exec(name, req, resp)
+		} else if g.prefix == "*" {
+			g.exec(name, req, resp)
 		}
-
 	}
 }

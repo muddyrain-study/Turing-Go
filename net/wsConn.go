@@ -1,14 +1,14 @@
 package net
 
 type ReqBody struct {
-	Seq   int         `json:"seq"`
+	Seq   int64       `json:"seq"`
 	Name  string      `json:"name"`
 	Msg   interface{} `json:"msg"`
 	Proxy string      `json:"proxy"`
 }
 
 type RespBody struct {
-	Seq  int         `json:"seq"`
+	Seq  int64       `json:"seq"`
 	Name string      `json:"name"`
 	Code int         `json:"code"`
 	Msg  interface{} `json:"msg"`

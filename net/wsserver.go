@@ -4,7 +4,6 @@ import (
 	"Turing-Go/utils"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/forgoer/openssl"
 	"github.com/gorilla/websocket"
 	"log"
@@ -77,14 +76,13 @@ func (w *wsServer) writeMsgLoop() {
 	for {
 		select {
 		case msg := <-w.outChan:
-			w.Write(msg)
+			w.Write(msg.Body)
 		}
 	}
 }
 
-func (w *wsServer) Write(msg *WsMsgResp) {
-	fmt.Println("writeMsgLoop: ", msg)
-	data, err := json.Marshal(msg.Body)
+func (w *wsServer) Write(msg interface{}) {
+	data, err := json.Marshal(msg)
 	if err != nil {
 		log.Println(err)
 	}
@@ -136,7 +134,6 @@ func (w *wsServer) readMsgLoop() {
 			log.Println("Failed to json unmarshal data: ", err)
 			continue
 		} else {
-			log.Println("body: ", body)
 			req := &WsMsgReq{Conn: w, Body: body}
 			resp := &WsMsgResp{Body: &RespBody{Name: body.Name, Seq: req.Body.Seq}}
 			w.router.Run(req, resp)
