@@ -8,7 +8,6 @@ import (
 	"Turing-Go/server/login/proto"
 	"Turing-Go/server/models"
 	"Turing-Go/utils"
-	"fmt"
 	"github.com/mitchellh/mapstructure"
 	"log"
 	"time"
@@ -24,7 +23,6 @@ func (a *Account) Router(r *net.Router) {
 	g.AddRouter("login", a.login)
 }
 func (a *Account) login(req *net.WsMsgReq, resp *net.WsMsgResp) {
-	fmt.Println("login", req, resp)
 	loginReq := &proto.LoginReq{}
 	loginResp := &proto.LoginResp{}
 	err := mapstructure.Decode(req.Body.Msg, loginReq)
@@ -32,7 +30,6 @@ func (a *Account) login(req *net.WsMsgReq, resp *net.WsMsgResp) {
 		log.Println("login mapstructure.Decode error:", err)
 	}
 	var user models.User
-	fmt.Println(db.Engine)
 	ok, err := db.Engine.Table(user).Where("username=?", loginReq.Username).Get(&user)
 
 	if err != nil {

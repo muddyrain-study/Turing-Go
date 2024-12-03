@@ -6,9 +6,13 @@ import (
 	"errors"
 	"github.com/forgoer/openssl"
 	"github.com/gorilla/websocket"
+	"github.com/mitchellh/mapstructure"
 	"log"
 	"sync"
+	"time"
 )
+
+var cid int64
 
 type wsServer struct {
 	wsConn       *websocket.Conn
@@ -17,15 +21,20 @@ type wsServer struct {
 	seq          int
 	property     map[string]interface{}
 	propertyLock sync.RWMutex
+	needSecret   bool
 }
 
-func NewWsServer(wsConn *websocket.Conn) *wsServer {
-	return &wsServer{
-		wsConn:   wsConn,
-		outChan:  make(chan *WsMsgResp, 1000),
-		property: make(map[string]interface{}),
-		seq:      0,
+func NewWsServer(wsConn *websocket.Conn, needSecret bool) *wsServer {
+	s := &wsServer{
+		wsConn:     wsConn,
+		outChan:    make(chan *WsMsgResp, 1000),
+		property:   make(map[string]interface{}),
+		seq:        0,
+		needSecret: needSecret,
 	}
+	cid++
+	s.SetProperty("cid", cid)
+	return s
 }
 
 func (w *wsServer) Router(router *Router) {
@@ -116,16 +125,18 @@ func (w *wsServer) readMsgLoop() {
 			log.Println("Failed to unzip data: ", err)
 			continue
 		}
-		secretKey, err := w.GetProperty("secretKey")
-		if err == nil {
-			key := secretKey.(string)
-			d, err := utils.AesCBCDecrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING)
-			if err != nil {
-				log.Println("Failed to decrypt data: ", err)
-				//continue
-				w.Handshake()
-			} else {
-				data = d
+		if w.needSecret {
+			secretKey, err := w.GetProperty("secretKey")
+			if err == nil {
+				key := secretKey.(string)
+				d, err := utils.AesCBCDecrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING)
+				if err != nil {
+					log.Println("Failed to decrypt data: ", err)
+					//continue
+					w.Handshake()
+				} else {
+					data = d
+				}
 			}
 		}
 		body := &ReqBody{}
@@ -134,10 +145,25 @@ func (w *wsServer) readMsgLoop() {
 			log.Println("Failed to json unmarshal data: ", err)
 			continue
 		} else {
+			log.Println("Received message: ", body)
 			req := &WsMsgReq{Conn: w, Body: body}
 			resp := &WsMsgResp{Body: &RespBody{Name: body.Name, Seq: req.Body.Seq}}
-			w.router.Run(req, resp)
-			w.outChan <- resp
+			if req.Body.Name == "heartbeat" {
+				// 回复心跳
+				h := &Heartbeat{}
+				err := mapstructure.Decode(resp.Body.Msg, h)
+				if err != nil {
+					log.Println("Failed to decode heartbeat: ", err)
+				}
+				h.STime = time.Now().UnixNano() / 1e6
+				resp.Body.Msg = h
+			} else {
+				if w.router != nil {
+					w.router.Run(req, resp)
+					w.outChan <- resp
+				}
+			}
+
 		}
 
 	}

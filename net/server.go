@@ -7,8 +7,9 @@ import (
 )
 
 type Server struct {
-	addr   string
-	router *Router
+	addr       string
+	router     *Router
+	needSecret bool
 }
 
 func NewServer(addr string) *Server {
@@ -16,7 +17,9 @@ func NewServer(addr string) *Server {
 		addr: addr,
 	}
 }
-
+func (s *Server) NeedSecret(needSecret bool) {
+	s.needSecret = needSecret
+}
 func (s *Server) Router(router *Router) {
 	s.router = router
 }
@@ -43,7 +46,7 @@ func (s *Server) wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("New connection from: ", wsConn.RemoteAddr())
 
-	wsServer := NewWsServer(wsConn)
+	wsServer := NewWsServer(wsConn, s.needSecret)
 	wsServer.Router(s.router)
 	wsServer.Start()
 	wsServer.Handshake()

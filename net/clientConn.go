@@ -6,11 +6,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/forgoer/openssl"
 	"github.com/gorilla/websocket"
 	"github.com/mitchellh/mapstructure"
 	"log"
 	"sync"
+	"time"
 )
 
 type ClientConn struct {
@@ -44,12 +46,14 @@ func NewSyncCtx() *syncCtx {
 }
 
 func (s *syncCtx) wait() *RespBody {
+	defer s.cancel()
 	select {
+	case msg := <-s.outChan:
+		fmt.Println("代理服务器发来的数据", msg)
+		return msg
 	case <-s.ctx.Done():
-		log.Println("proxy service response message timeout")
+		fmt.Println("----------------")
 		return nil
-	case body := <-s.outChan:
-		return body
 	}
 }
 
@@ -60,17 +64,19 @@ func (c *ClientConn) Start() bool {
 }
 
 func (c *ClientConn) waitHandshake() bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 5)
-	defer cancel()
-	select {
-	case <-c.handshakeChan:
-		log.Println("握手成功")
-		return true
-	case <-ctx.Done():
-		log.Println("握手超时")
-		return false
+	if !c.handshake {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		select {
+		case _ = <-c.handshakeChan:
+			log.Println("握手成功了...")
+			return true
+		case <-ctx.Done():
+			log.Println("握手超时了...")
+			return false
+		}
 	}
-
+	return true
 }
 
 func (c *ClientConn) wsReadLoop() {
@@ -113,7 +119,6 @@ func (c *ClientConn) wsReadLoop() {
 		err = json.Unmarshal(data, body)
 		if err != nil {
 			log.Println("Failed to json unmarshal data: ", err)
-			continue
 		} else {
 			if body.Seq == 0 {
 				if body.Name == handshakeMsg {
@@ -136,12 +141,13 @@ func (c *ClientConn) wsReadLoop() {
 				}
 			} else {
 				c.syncCtxLock.RLock()
-				if ctx, ok := c.syncCtxMap[body.Seq]; ok {
+				ctx, ok := c.syncCtxMap[body.Seq]
+				c.syncCtxLock.RUnlock()
+				if ok {
 					ctx.outChan <- body
 				} else {
 					log.Println("no seq found")
 				}
-				c.syncCtxLock.RUnlock()
 			}
 		}
 
@@ -162,7 +168,6 @@ func (c *ClientConn) GetProperty(key string) (interface{}, error) {
 	} else {
 		return nil, errors.New("no property found")
 	}
-	return nil, nil
 }
 func (c *ClientConn) RemoveProperty(key string) {
 	c.propertyLock.Lock()
@@ -185,7 +190,6 @@ func (c *ClientConn) Push(name string, data interface{}) {
 			Seq:  0,
 		},
 	}
-	//c.outChan <- resp
 	c.write(resp.Body)
 
 }
@@ -196,15 +200,15 @@ func (c *ClientConn) write(body interface{}) error {
 		log.Println(err)
 		return err
 	}
-	secretKey, err := c.GetProperty("secretKey")
-	if err == nil {
-		key := secretKey.(string)
-		data, err = utils.AesCBCEncrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING)
-		if err != nil {
-			log.Println("Failed to encrypt data: ", err)
-			return err
-		}
-	}
+	//secretKey, err := c.GetProperty("secretKey")
+	//if err == nil {
+	//	key := secretKey.(string)
+	//	data, err = utils.AesCBCEncrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING)
+	//	if err != nil {
+	//		log.Println("Failed to encrypt data: ", err)
+	//		return err
+	//	}
+	//}
 	if data, err := utils.Zip(data); err == nil {
 		if err := c.wsConn.WriteMessage(websocket.BinaryMessage, data); err != nil {
 			log.Println("Failed to write message: ", err)
@@ -222,16 +226,16 @@ func (c *ClientConn) SetOnPush(hook func(conn *ClientConn, body *RespBody)) {
 }
 
 func (c *ClientConn) Send(name string, msg interface{}) (*RespBody, error) {
+	c.syncCtxLock.Lock()
 	c.Seq += 1
 	seq := c.Seq
 	sc := NewSyncCtx()
-	c.syncCtxLock.Lock()
+	req := &ReqBody{Name: name, Msg: msg, Seq: seq}
 	c.syncCtxMap[seq] = sc
 	c.syncCtxLock.Unlock()
 
-	req := &ReqBody{Name: name, Msg: msg, Seq: seq}
-	err := c.write(req)
 	resp := &RespBody{Name: name, Seq: seq, Code: constant.OK}
+	err := c.write(req)
 	if err != nil {
 		sc.cancel()
 	} else {
@@ -250,6 +254,11 @@ func (c *ClientConn) Send(name string, msg interface{}) (*RespBody, error) {
 
 func NewClientConn(wsConn *websocket.Conn) *ClientConn {
 	return &ClientConn{
-		wsConn: wsConn,
+		wsConn:        wsConn,
+		handshakeChan: make(chan bool),
+		Seq:           0,
+		isClosed:      false,
+		property:      make(map[string]interface{}),
+		syncCtxMap:    map[int64]*syncCtx{},
 	}
 }

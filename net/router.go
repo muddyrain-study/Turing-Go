@@ -1,6 +1,7 @@
 package net
 
 import (
+	"log"
 	"strings"
 )
 
@@ -19,6 +20,8 @@ func (g *group) exec(name string, req *WsMsgReq, resp *WsMsgResp) {
 		h = g.handlerMap["*"]
 		if h != nil {
 			h(req, resp)
+		} else {
+			log.Println("路由未定义")
 		}
 	}
 }
@@ -44,12 +47,12 @@ func NewRouter() *Router {
 }
 
 func (r *Router) Run(req *WsMsgReq, resp *WsMsgResp) {
-	strings := strings.Split(req.Body.Name, ".")
+	strs := strings.Split(req.Body.Name, ".")
 	prefix := ""
 	name := ""
-	if len(strings) == 2 {
-		prefix = strings[0]
-		name = strings[1]
+	if len(strs) == 2 {
+		prefix = strs[0]
+		name = strs[1]
 	}
 	for _, g := range r.group {
 		if g.prefix == prefix {

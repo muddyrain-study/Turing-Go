@@ -4,8 +4,6 @@ import (
 	"Turing-Go/config"
 	"Turing-Go/constant"
 	"Turing-Go/net"
-	"fmt"
-	"log"
 	"strings"
 	"sync"
 )
@@ -30,42 +28,40 @@ func (h *Handler) Router(r *net.Router) {
 }
 
 func (h *Handler) all(req *net.WsMsgReq, resp *net.WsMsgResp) {
-	fmt.Println("网管的处理器")
-	name := req.Body.Name
-	proxyStr := ""
-	if isAccount(name) {
+	proxyStr := req.Body.Proxy
+	if isAccount(req.Body.Name) {
 		proxyStr = h.loginProxy
+	} else {
+		proxyStr = h.gameProxy
 	}
 	if proxyStr == "" {
 		resp.Body.Code = constant.ProxyNotInConnect
 		return
 	}
 	h.proxyMutex.Lock()
-	m := h.proxyMap[proxyStr]
-	if m == nil {
-		m = make(map[int64]*net.ProxyClient)
+	_, ok := h.proxyMap[proxyStr]
+	if !ok {
+		h.proxyMap[proxyStr] = make(map[int64]*net.ProxyClient)
 	}
 	h.proxyMutex.Unlock()
-	c, err := req.Conn.GetProperty("cid")
-	if err != nil {
-		log.Println("no cid")
-		resp.Body.Code = constant.InvalidParam
-		return
-	}
-	cid := c.(int64)
-	proxy := m[cid]
-	if proxy == nil {
+	//获取客户端id
+	cidValue, _ := req.Conn.GetProperty("cid")
+	cid := cidValue.(int64)
+	proxy, ok := h.proxyMap[proxyStr][cid]
+	if !ok {
+		//没有 建立连接 并发起调用
 		proxy = net.NewProxyClient(proxyStr)
+		h.proxyMutex.Lock()
+		h.proxyMap[proxyStr][cid] = proxy
+		h.proxyMutex.Unlock()
 		err := proxy.Connect()
 		if err != nil {
 			h.proxyMutex.Lock()
 			delete(h.proxyMap[proxyStr], cid)
 			h.proxyMutex.Unlock()
-			log.Println("proxy connect error", err)
 			resp.Body.Code = constant.ProxyConnectError
 			return
 		}
-		h.proxyMap[proxyStr][cid] = proxy
 		proxy.SetProperty("cid", cid)
 		proxy.SetProperty("proxy", proxyStr)
 		proxy.SetProperty("gateConn", req.Conn)
@@ -74,23 +70,22 @@ func (h *Handler) all(req *net.WsMsgReq, resp *net.WsMsgResp) {
 	resp.Body.Seq = req.Body.Seq
 	resp.Body.Name = req.Body.Name
 	r, err := proxy.Send(req.Body.Name, req.Body.Msg)
-	if err != nil {
+	if err == nil {
 		resp.Body.Code = r.Code
 		resp.Body.Msg = r.Msg
 	} else {
 		resp.Body.Code = constant.ProxyConnectError
-		return
+		resp.Body.Msg = nil
 	}
 }
 
 func (h *Handler) onPush(conn *net.ClientConn, body *net.RespBody) {
-	gc, err := conn.GetProperty("gateConn")
+	gateConn, err := conn.GetProperty("gateConn")
 	if err != nil {
-		log.Println("onPush gateConn ", err)
 		return
 	}
-	gateConn := gc.(net.WSConn)
-	gateConn.Push(body.Name, body.Msg)
+	wc := gateConn.(net.WSConn)
+	wc.Push(body.Name, body.Msg)
 }
 
 func isAccount(name string) bool {
