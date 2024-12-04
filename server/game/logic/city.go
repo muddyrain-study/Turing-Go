@@ -7,6 +7,7 @@ import (
 	"Turing-Go/server/common"
 	"Turing-Go/server/game/gameConfig"
 	"Turing-Go/server/game/global"
+	"Turing-Go/server/game/model"
 	"Turing-Go/server/game/model/data"
 	"log"
 	"math/rand"
@@ -42,4 +43,20 @@ func (r *roleCityService) InitCity(rid int, nickName string, conn net.WSConn) er
 	}
 	return nil
 
+}
+
+func (r *roleCityService) GetRoleCities(rid int) ([]model.MapRoleCity, error) {
+	cities := make([]data.MapRoleCity, 0)
+	city := &data.MapRoleCity{}
+	err := db.Engine.Table(city).Where("rid=?", rid).Find(&cities)
+	modelCities := make([]model.MapRoleCity, len(cities))
+
+	if err != nil {
+		log.Println("查询角色城池异常", err)
+		return modelCities, common.New(constant.DBError, "数据库错误")
+	}
+	for i, roleCity := range cities {
+		modelCities[i] = roleCity.ToModel().(model.MapRoleCity)
+	}
+	return modelCities, nil
 }

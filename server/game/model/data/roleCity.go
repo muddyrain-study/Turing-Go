@@ -1,6 +1,7 @@
 package data
 
 import (
+	"Turing-Go/server/game/model"
 	"sync"
 	"time"
 )
@@ -20,4 +21,22 @@ type MapRoleCity struct {
 
 func (m *MapRoleCity) TableName() string {
 	return "map_role_city"
+}
+
+func (m *MapRoleCity) ToModel() interface{} {
+	p := model.MapRoleCity{}
+	p.X = m.X
+	p.Y = m.Y
+	p.CityId = m.CityId
+	p.UnionId = 0
+	p.UnionName = ""
+	p.ParentId = 0
+	p.MaxDurable = 1000
+	p.CurDurable = m.CurDurable
+	p.Level = 1
+	p.RId = m.RId
+	p.Name = m.Name
+	p.IsMain = m.IsMain == 1
+	p.OccupyTime = m.OccupyTime.UnixNano() / 1e6
+	return p
 }
