@@ -3,6 +3,7 @@ package net
 import (
 	"errors"
 	"github.com/gorilla/websocket"
+	"log"
 	"time"
 )
 
@@ -26,6 +27,7 @@ func (c *ProxyClient) Connect() error {
 		if !c.conn.Start() {
 			return errors.New("握手失败")
 		}
+		log.Println("连接成功 proxy:", c.proxy)
 	}
 	return err
 }

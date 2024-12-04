@@ -54,7 +54,6 @@ func (w *wsServer) GetProperty(key string) (interface{}, error) {
 	} else {
 		return nil, errors.New("no property found")
 	}
-	return nil, nil
 }
 func (w *wsServer) RemoveProperty(key string) {
 	w.propertyLock.Lock()
@@ -85,6 +84,7 @@ func (w *wsServer) writeMsgLoop() {
 	for {
 		select {
 		case msg := <-w.outChan:
+			log.Printf("服务器发送消息: %+v\n", msg.Body)
 			w.Write(msg.Body)
 		}
 	}
@@ -145,7 +145,6 @@ func (w *wsServer) readMsgLoop() {
 			log.Println("Failed to json unmarshal data: ", err)
 			continue
 		} else {
-			log.Println("Received message: ", body)
 			req := &WsMsgReq{Conn: w, Body: body}
 			resp := &WsMsgResp{Body: &RespBody{Name: body.Name, Seq: req.Body.Seq}}
 			if req.Body.Name == "heartbeat" {

@@ -4,6 +4,7 @@ import (
 	"Turing-Go/config"
 	"Turing-Go/constant"
 	"Turing-Go/net"
+	"log"
 	"strings"
 	"sync"
 )
@@ -22,12 +23,13 @@ type Handler struct {
 
 func (h *Handler) Router(r *net.Router) {
 	h.loginProxy = config.File.MustValue("gate_server", "login_proxy", "ws://127.0.0.1:8003")
-	h.gameProxy = config.File.MustValue("gate_server", "game_proxy", "ws://127.0.0.1:8001")
+	h.gameProxy = config.File.MustValue("gate_server", "game_proxy", "ws://127.0.0.1:8081")
 	g := r.Group("*")
 	g.AddRouter("*", h.all)
 }
 
 func (h *Handler) all(req *net.WsMsgReq, resp *net.WsMsgResp) {
+	log.Println("req body name", req.Body.Name)
 	proxyStr := req.Body.Proxy
 	if isAccount(req.Body.Name) {
 		proxyStr = h.loginProxy
@@ -60,6 +62,7 @@ func (h *Handler) all(req *net.WsMsgReq, resp *net.WsMsgResp) {
 			delete(h.proxyMap[proxyStr], cid)
 			h.proxyMutex.Unlock()
 			resp.Body.Code = constant.ProxyConnectError
+			log.Println("代理连接失败", err)
 			return
 		}
 		proxy.SetProperty("cid", cid)
