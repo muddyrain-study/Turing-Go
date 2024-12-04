@@ -12,9 +12,11 @@ var Router = &net.Router{}
 func Init() {
 	db.TestDB()
 	gameConfig.Basic.Load()
+	gameConfig.MapBuildConf.Load()
 	initRouter()
 }
 
 func initRouter() {
-	controller.DefaultRoleHandler.InitRouter(Router)
+	controller.RoleController.InitRouter(Router)
+	controller.NationMapController.InitRouter(Router)
 }

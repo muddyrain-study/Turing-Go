@@ -84,7 +84,8 @@ func (w *wsServer) writeMsgLoop() {
 	for {
 		select {
 		case msg := <-w.outChan:
-			log.Printf("服务器发送消息: %+v\n", msg.Body)
+			jsonData, _ := json.Marshal(msg.Body)
+			log.Printf("服务器发送消息: %v \n", string(jsonData))
 			w.Write(msg.Body)
 		}
 	}
