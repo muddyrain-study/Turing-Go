@@ -21,6 +21,7 @@ func (r *roleController) InitRouter(router *net.Router) {
 	g := router.Group("role")
 	g.AddRouter("enterServer", r.enterServer)
 	g.AddRouter("myProperty", r.myProperty)
+	g.AddRouter("posTagList", r.posTagList)
 }
 
 func (r *roleController) enterServer(req *net.WsMsgReq, rsp *net.WsMsgResp) {
@@ -92,6 +93,29 @@ func (r *roleController) myProperty(req *net.WsMsgReq, resp *net.WsMsgResp) {
 		return
 	}
 
+	resp.Body.Code = constant.OK
+	resp.Body.Msg = respObj
+}
+
+func (r *roleController) posTagList(req *net.WsMsgReq, resp *net.WsMsgResp) {
+	respObj := &model.PosTagListRsp{}
+
+	resp.Body.Seq = req.Body.Seq
+	resp.Body.Name = req.Body.Name
+
+	role, err := req.Conn.GetProperty("role")
+	if err != nil {
+		resp.Body.Code = constant.SessionInvalid
+		return
+	}
+	rid := role.(data.Role).RId
+
+	pts, err := logic.RoleAttrService.GetTagList(rid)
+	if err != nil {
+		resp.Body.Code = err.(*common.MyError).Code()
+		return
+	}
+	respObj.PosTags = pts
 	resp.Body.Code = constant.OK
 	resp.Body.Msg = respObj
 }

@@ -27,22 +27,46 @@ func (r *roleCityService) InitCity(rid int, nickName string, conn net.WSConn) er
 		return common.New(constant.DBError, "数据库错误")
 	}
 	if !ok {
-		roleCity.X = rand.Intn(global.MapWidth)
-		roleCity.Y = rand.Intn(global.MapHeight)
-
-		roleCity.RId = rid
-		roleCity.Name = nickName
-		roleCity.CurDurable = gameConfig.Basic.City.Durable
-		roleCity.CreatedAt = time.Now()
-		roleCity.IsMain = 1
-		_, err := db.Engine.Table(roleCity).Insert(&roleCity)
-		if err != nil {
-			log.Println("插入角色城池异常", err)
-			return common.New(constant.DBError, "数据库错误")
+		for {
+			roleCity.X = rand.Intn(global.MapWidth)
+			roleCity.Y = rand.Intn(global.MapHeight)
+			if isCanBuild(roleCity.X, roleCity.Y) {
+				roleCity.RId = rid
+				roleCity.Name = nickName
+				roleCity.CurDurable = gameConfig.Basic.City.Durable
+				roleCity.CreatedAt = time.Now()
+				roleCity.IsMain = 1
+				_, err := db.Engine.Table(roleCity).Insert(&roleCity)
+				if err != nil {
+					log.Println("插入角色城池异常", err)
+					return common.New(constant.DBError, "数据库错误")
+				}
+				break
+			}
 		}
+
 	}
 	return nil
 
+}
+
+func isCanBuild(x int, y int) bool {
+	confs := gameConfig.MapRes.Confs
+	pIndex := global.ToPosition(x, y)
+	_, ok := confs[pIndex]
+	if !ok {
+		return false
+	}
+	sysBuild := gameConfig.MapRes.SysBuild
+	for _, v := range sysBuild {
+		if v.Type == gameConfig.MapBuildSysCity {
+			// 5 格内不能建城
+			if x >= v.X-5 && x <= v.X+5 && y >= v.Y-5 && y <= v.Y+5 {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func (r *roleCityService) GetRoleCities(rid int) ([]model.MapRoleCity, error) {

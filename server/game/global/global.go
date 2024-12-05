@@ -1,4 +1,8 @@
 package global
 
-const MapWidth = 200
-const MapHeight = 200
+var MapWidth = 200
+var MapHeight = 200
+
+func ToPosition(x, y int) int {
+	return x + y*MapHeight
+}

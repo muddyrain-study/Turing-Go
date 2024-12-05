@@ -13,6 +13,8 @@ func Init() {
 	db.TestDB()
 	gameConfig.Basic.Load()
 	gameConfig.MapBuildConf.Load()
+	gameConfig.MapRes.Load()
+	gameConfig.FacilityConf.Load()
 	initRouter()
 }
 
