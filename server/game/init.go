@@ -5,6 +5,7 @@ import (
 	"Turing-Go/net"
 	"Turing-Go/server/game/controller"
 	"Turing-Go/server/game/gameConfig"
+	"Turing-Go/server/game/gameConfig/general"
 )
 
 var Router = &net.Router{}
@@ -15,10 +16,12 @@ func Init() {
 	gameConfig.MapBuildConf.Load()
 	gameConfig.MapRes.Load()
 	gameConfig.FacilityConf.Load()
+	general.General.Load()
 	initRouter()
 }
 
 func initRouter() {
 	controller.RoleController.InitRouter(Router)
 	controller.NationMapController.InitRouter(Router)
+	controller.GeneralController.InitRouter(Router)
 }
