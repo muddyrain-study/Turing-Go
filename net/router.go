@@ -26,15 +26,14 @@ func (g *group) exec(name string, req *WsMsgReq, resp *WsMsgResp) {
 		if h != nil {
 			h(req, resp)
 		}
-	}
-	else{
+	} else {
 		for i := 0; i < len(g.Middlewares); i++ {
-			h  = g.Middlewares[i](h)
+			h = g.Middlewares[i](h)
 		}
-		mm,ok := g.MiddlewareFuncMap[name]
+		mm, ok := g.MiddlewareFuncMap[name]
 		if ok {
 			for i := 0; i < len(g.Middlewares); i++ {
-						h = mm[i](h)
+				h = mm[i](h)
 			}
 		}
 		if h != nil {
@@ -56,8 +55,8 @@ func (g *group) Use(middlewares ...MiddlewareFunc) {
 }
 func (r *Router) Group(prefix string) *group {
 	g := &group{
-		prefix:     prefix,
-		handlerMap: map[string]Handler{},
+		prefix:            prefix,
+		handlerMap:        map[string]Handler{},
 		MiddlewareFuncMap: make(map[string][]MiddlewareFunc),
 	}
 
