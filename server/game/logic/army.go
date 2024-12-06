@@ -22,7 +22,22 @@ func (g *armyService) GetArmies(rid int) ([]model.Army, error) {
 		log.Println("军队查询出错", err)
 		return nil, common.New(constant.DBError, "军队查询出错")
 	}
-	modelMrs := make([]model.Army, len(mrs))
+	modelMrs := make([]model.Army, 0)
+	for _, v := range mrs {
+		modelMrs = append(modelMrs, v.ToModel().(model.Army))
+	}
+	return modelMrs, nil
+}
+
+func (g *armyService) GetArmiesByCity(rid int, cityId int) ([]model.Army, error) {
+	mrs := make([]data.Army, 0)
+	mr := &data.Army{}
+	err := db.Engine.Table(mr).Where("rid=?&cityId=?", rid, cityId).Find(&mrs)
+	if err != nil {
+		log.Println("军队查询出错", err)
+		return nil, common.New(constant.DBError, "军队查询出错")
+	}
+	modelMrs := make([]model.Army, 0)
 	for _, v := range mrs {
 		modelMrs = append(modelMrs, v.ToModel().(model.Army))
 	}

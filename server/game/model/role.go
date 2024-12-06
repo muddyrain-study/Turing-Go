@@ -147,3 +147,10 @@ type MyGeneralReq struct {
 type MyGeneralRsp struct {
 	Generals []General `json:"generals"`
 }
+type ArmyListReq struct {
+	CityId int `json:"cityId"`
+}
+type ArmyListRsp struct {
+	CityId int    `json:"cityId"`
+	Armys  []Army `json:"armys"`
+}
