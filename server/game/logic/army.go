@@ -43,3 +43,7 @@ func (g *armyService) GetArmiesByCity(rid int, cityId int) ([]model.Army, error)
 	}
 	return modelMrs, nil
 }
+
+func (g *armyService) ScanBlock(obj *model.ScanBlockReq) ([]model.Army, error) {
+	return nil, nil
+}

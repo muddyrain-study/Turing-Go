@@ -6,6 +6,7 @@ import (
 	"Turing-Go/server/game/controller"
 	"Turing-Go/server/game/gameConfig"
 	"Turing-Go/server/game/gameConfig/general"
+	"Turing-Go/server/game/logic"
 )
 
 var Router = &net.Router{}
@@ -18,6 +19,7 @@ func Init() {
 	gameConfig.FacilityConf.Load()
 	gameConfig.Skill.Load()
 	general.General.Load()
+	logic.RoleBuildService.Load()
 	initRouter()
 }
 

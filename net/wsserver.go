@@ -146,6 +146,8 @@ func (w *wsServer) readMsgLoop() {
 			log.Println("Failed to json unmarshal data: ", err)
 			continue
 		} else {
+			bodyMarshal, _ := json.Marshal(body)
+			log.Printf("服务器收到消息: %v \n", string(bodyMarshal))
 			context := &WsContext{property: make(map[string]interface{})}
 			req := &WsMsgReq{Conn: w, Body: body, Context: context}
 			resp := &WsMsgResp{Body: &RespBody{Name: body.Name, Seq: req.Body.Seq}}

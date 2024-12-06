@@ -97,3 +97,7 @@ func (r *roleCityService) GetRoleCities(rid int) ([]model.MapRoleCity, error) {
 	}
 	return modelCities, nil
 }
+
+func (r *roleCityService) ScanBlock(obj *model.ScanBlockReq) ([]model.MapRoleCity, error) {
+	return nil, nil
+}

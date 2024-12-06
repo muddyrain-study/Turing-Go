@@ -1,6 +1,7 @@
 package data
 
 import (
+	"Turing-Go/server/game/gameConfig"
 	"Turing-Go/server/game/model"
 	"time"
 )
@@ -58,4 +59,19 @@ func (m *MapRoleBuild) ToModel() interface{} {
 	p.Level = m.Level
 	p.OPLevel = m.OPLevel
 	return p
+}
+
+func (m *MapRoleBuild) Init() {
+	if cfg := gameConfig.MapBuildConf.BuildConfig(m.Type, m.Level); cfg != nil {
+		m.Name = cfg.Name
+		m.Level = cfg.Level
+		m.Type = cfg.Type
+		m.Wood = cfg.Wood
+		m.Iron = cfg.Iron
+		m.Stone = cfg.Stone
+		m.Grain = cfg.Grain
+		m.MaxDurable = cfg.Durable
+		m.CurDurable = cfg.Durable
+		m.Defender = cfg.Defender
+	}
 }

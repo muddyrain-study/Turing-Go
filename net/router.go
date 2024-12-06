@@ -21,26 +21,22 @@ func (g *group) exec(name string, req *WsMsgReq, resp *WsMsgResp) {
 	if !ok {
 		h, ok = g.handlerMap["*"]
 		if !ok {
-			log.Println("路由未定义")
+			log.Println("未找到对应的路由")
 		}
-		if h != nil {
-			h(req, resp)
-		}
-	} else {
+	}
+	if ok {
+		//先加的 先执行
 		for i := 0; i < len(g.Middlewares); i++ {
 			h = g.Middlewares[i](h)
 		}
 		mm, ok := g.MiddlewareFuncMap[name]
 		if ok {
-			for i := 0; i < len(g.Middlewares); i++ {
+			for i := 0; i < len(mm); i++ {
 				h = mm[i](h)
 			}
 		}
-		if h != nil {
-			h(req, resp)
-		}
+		h(req, resp)
 	}
-
 }
 func (g *group) AddRouter(name string, h Handler, middlewares ...MiddlewareFunc) {
 	g.mutex.Lock()

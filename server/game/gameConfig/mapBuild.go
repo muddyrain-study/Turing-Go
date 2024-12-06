@@ -24,7 +24,9 @@ type mapBuildConf struct {
 	cfgMap map[int8][]cfg
 }
 
-var MapBuildConf = &mapBuildConf{}
+var MapBuildConf = &mapBuildConf{
+	cfgMap: make(map[int8][]cfg),
+}
 
 const mapBuildConfFile = "/conf/game/map_build.json"
 
@@ -49,4 +51,21 @@ func (m *mapBuildConf) Load() {
 		log.Println("地图配置资源格式定义失败")
 		panic(err)
 	}
+	for _, v := range m.Cfg {
+		_, ok := m.cfgMap[v.Type]
+		if !ok {
+			m.cfgMap[v.Type] = make([]cfg, 0)
+		}
+		m.cfgMap[v.Type] = append(m.cfgMap[v.Type], v)
+	}
+}
+
+func (m *mapBuildConf) BuildConfig(buildType int8, level int8) *cfg {
+	cfgs := m.cfgMap[buildType]
+	for _, v := range cfgs {
+		if v.Level == level {
+			return &v
+		}
+	}
+	return nil
 }

@@ -18,12 +18,12 @@ var RoleController = &roleController{}
 type roleController struct {
 }
 
-func (c *roleController) InitRouter(router *net.Router) {
-	r := router.Group("role")
-	r.Use(middleware.Log())
-	r.AddRouter("enterServer", c.enterServer)
-	r.AddRouter("myProperty", c.myProperty, middleware.CheckRole())
-	r.AddRouter("posTagList", c.posTagList)
+func (r *roleController) InitRouter(router *net.Router) {
+	g := router.Group("role")
+	g.Use(middleware.Log())
+	g.AddRouter("enterServer", r.enterServer)
+	g.AddRouter("myProperty", r.myProperty, middleware.CheckRole())
+	g.AddRouter("posTagList", r.posTagList)
 }
 
 func (r *roleController) enterServer(req *net.WsMsgReq, rsp *net.WsMsgResp) {

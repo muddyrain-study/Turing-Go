@@ -3,8 +3,11 @@ package controller
 import (
 	"Turing-Go/constant"
 	"Turing-Go/net"
+	"Turing-Go/server/common"
 	"Turing-Go/server/game/gameConfig"
+	"Turing-Go/server/game/logic"
 	"Turing-Go/server/game/model"
+	"github.com/mitchellh/mapstructure"
 )
 
 var NationMapController = &nationMapController{}
@@ -15,6 +18,7 @@ type nationMapController struct {
 func (r *nationMapController) InitRouter(router *net.Router) {
 	g := router.Group("nationMap")
 	g.AddRouter("config", r.config)
+	g.AddRouter("scanBlock", r.scanBlock)
 }
 
 func (r *nationMapController) config(req *net.WsMsgReq, rsp *net.WsMsgResp) {
@@ -38,4 +42,38 @@ func (r *nationMapController) config(req *net.WsMsgReq, rsp *net.WsMsgResp) {
 	rsp.Body.Msg = rspObj
 	rsp.Body.Code = constant.OK
 
+}
+
+func (*nationMapController) scanBlock(req *net.WsMsgReq, resp *net.WsMsgResp) {
+	reqObj := &model.ScanBlockReq{}
+	respObj := &model.ScanRsp{}
+
+	err := mapstructure.Decode(req.Body.Msg, reqObj)
+	if err != nil {
+		resp.Body.Code = constant.InvalidParam
+		return
+	}
+	resp.Body.Name = req.Body.Name
+	resp.Body.Seq = req.Body.Seq
+	resp.Body.Code = constant.OK
+
+	mrb, err := logic.RoleBuildService.ScanBlock(reqObj)
+	if err != nil {
+		resp.Body.Code = err.(*common.MyError).Code()
+		return
+	}
+	respObj.MRBuilds = mrb
+	mrc, err := logic.RoleCityService.ScanBlock(reqObj)
+	if err != nil {
+		resp.Body.Code = err.(*common.MyError).Code()
+		return
+	}
+	respObj.MCBuilds = mrc
+	armies, err := logic.ArmyService.ScanBlock(reqObj)
+	if err != nil {
+		resp.Body.Code = err.(*common.MyError).Code()
+		return
+	}
+	respObj.Armys = armies
+	resp.Body.Msg = respObj
 }
