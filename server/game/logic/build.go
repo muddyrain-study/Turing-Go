@@ -8,6 +8,7 @@ import (
 	"Turing-Go/server/game/global"
 	"Turing-Go/server/game/model"
 	"Turing-Go/server/game/model/data"
+	"Turing-Go/utils"
 	"log"
 )
 
@@ -87,6 +88,26 @@ func (r *roleBuildService) GetBuilds(rid int) ([]model.MapRoleBuild, error) {
 	return modelBuilds, nil
 }
 
-func (r *roleBuildService) ScanBlock(obj *model.ScanBlockReq) ([]model.MapRoleBuild, error) {
-	return nil, nil
+func (r *roleBuildService) ScanBlock(req *model.ScanBlockReq) ([]model.MapRoleBuild, error) {
+	x := req.X
+	y := req.Y
+	length := req.Length
+	var mrbs []model.MapRoleBuild
+	if x < 0 || x >= global.MapWidth || y < 0 || y >= global.MapHeight {
+		return mrbs, nil
+	}
+
+	maxX := utils.MinInt(global.MapWidth, x+length-1)
+	maxY := utils.MinInt(global.MapHeight, y+length-1)
+
+	for i := x - length; i <= maxX; i++ {
+		for j := y - length; j <= maxY; j++ {
+			posId := global.ToPosition(i, j)
+			mrb, ok := r.posRB[posId]
+			if ok {
+				mrbs = append(mrbs, mrb.ToModel().(model.MapRoleBuild))
+			}
+		}
+	}
+	return mrbs, nil
 }

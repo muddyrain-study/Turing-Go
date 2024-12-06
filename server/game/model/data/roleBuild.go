@@ -75,3 +75,13 @@ func (m *MapRoleBuild) Init() {
 		m.Defender = cfg.Defender
 	}
 }
+
+func (m *MapRoleBuild) IsSysCity() bool {
+	return m.Type == MapBuildSysCity
+}
+func (m *MapRoleBuild) IsSysFortress() bool {
+	return m.Type == MapBuildSysFortress
+}
+func (m *MapRoleBuild) IsRoleFortress() bool {
+	return m.Type == MapBuildFortress
+}
