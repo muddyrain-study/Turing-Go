@@ -8,6 +8,7 @@ import (
 	"Turing-Go/server/game/model"
 	"Turing-Go/server/game/model/data"
 	"encoding/json"
+	"github.com/go-xorm/xorm"
 	"log"
 	"sync"
 )
@@ -21,7 +22,8 @@ type roleAttrService struct {
 	mutex sync.RWMutex
 }
 
-func (r *roleAttrService) TryCreate(rid int, conn net.WSConn) error {
+func (r *roleAttrService) TryCreate(rid int, req *net.WsMsgReq) error {
+	session := req.Context.Get("session").(*xorm.Session)
 	roleAttribute := data.RoleAttribute{}
 	ok, err := db.Engine.Table(roleAttribute).Where("rid=?", rid).Get(&roleAttribute)
 	if err != nil {
@@ -33,7 +35,11 @@ func (r *roleAttrService) TryCreate(rid int, conn net.WSConn) error {
 		roleAttribute.UnionId = 0
 		roleAttribute.ParentId = 0
 		roleAttribute.PosTags = ""
-		_, err := db.Engine.Table(roleAttribute).Insert(&roleAttribute)
+		if session != nil {
+			_, err = session.Table(roleAttribute).Insert(&roleAttribute)
+		} else {
+			_, err = db.Engine.Table(roleAttribute).Insert(&roleAttribute)
+		}
 		if err != nil {
 			log.Println("插入角色属性异常", err)
 			return common.New(constant.DBError, "数据库错误")

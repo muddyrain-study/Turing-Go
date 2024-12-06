@@ -5,6 +5,7 @@ import (
 	"Turing-Go/net"
 	"Turing-Go/server/common"
 	"Turing-Go/server/game/logic"
+	"Turing-Go/server/game/middleware"
 	"Turing-Go/server/game/model"
 	"Turing-Go/server/game/model/data"
 	"Turing-Go/utils"
@@ -17,11 +18,12 @@ var RoleController = &roleController{}
 type roleController struct {
 }
 
-func (r *roleController) InitRouter(router *net.Router) {
-	g := router.Group("role")
-	g.AddRouter("enterServer", r.enterServer)
-	g.AddRouter("myProperty", r.myProperty)
-	g.AddRouter("posTagList", r.posTagList)
+func (c *roleController) InitRouter(router *net.Router) {
+	r := router.Group("role")
+	r.Use(middleware.Log())
+	r.AddRouter("enterServer", c.enterServer)
+	r.AddRouter("myProperty", c.myProperty, middleware.CheckRole())
+	r.AddRouter("posTagList", c.posTagList)
 }
 
 func (r *roleController) enterServer(req *net.WsMsgReq, rsp *net.WsMsgResp) {
@@ -43,7 +45,7 @@ func (r *roleController) enterServer(req *net.WsMsgReq, rsp *net.WsMsgResp) {
 		return
 	}
 	uid := claims.Uid
-	err = logic.RoleService.EnterServer(uid, rspObj, req.Conn)
+	err = logic.RoleService.EnterServer(uid, rspObj, req)
 	if err != nil {
 		rsp.Body.Code = err.(*common.MyError).Code()
 		return

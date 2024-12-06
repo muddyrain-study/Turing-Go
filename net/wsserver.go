@@ -146,7 +146,8 @@ func (w *wsServer) readMsgLoop() {
 			log.Println("Failed to json unmarshal data: ", err)
 			continue
 		} else {
-			req := &WsMsgReq{Conn: w, Body: body}
+			context := &WsContext{property: make(map[string]interface{})}
+			req := &WsMsgReq{Conn: w, Body: body, Context: context}
 			resp := &WsMsgResp{Body: &RespBody{Name: body.Name, Seq: req.Body.Seq}}
 			if req.Body.Name == "heartbeat" {
 				// 回复心跳
@@ -160,10 +161,9 @@ func (w *wsServer) readMsgLoop() {
 			} else {
 				if w.router != nil {
 					w.router.Run(req, resp)
-					w.outChan <- resp
 				}
 			}
-
+			w.outChan <- resp
 		}
 
 	}

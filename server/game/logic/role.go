@@ -18,8 +18,15 @@ var RoleService = &roleService{}
 type roleService struct {
 }
 
-func (r *roleService) EnterServer(uid int, rsp *model.EnterServerRsp, conn net.WSConn) error {
+func (r *roleService) EnterServer(uid int, rsp *model.EnterServerRsp, req *net.WsMsgReq) error {
 	role := data.Role{}
+	session := db.Engine.NewSession()
+	defer session.Close()
+	if err := session.Begin(); err != nil {
+		log.Println("事务出错", err)
+		return common.New(constant.DBError, "查询角色出错")
+	}
+	req.Context.Set("session", session)
 	ok, err := db.Engine.Table(role).Where("uid=?", uid).Get(&role)
 	if err != nil {
 		log.Println("查询角色异常", err)
@@ -41,7 +48,7 @@ func (r *roleService) EnterServer(uid int, rsp *model.EnterServerRsp, conn net.W
 			roleRes.Iron = gameConfig.Basic.Role.Iron
 			roleRes.Stone = gameConfig.Basic.Role.Stone
 			roleRes.Grain = gameConfig.Basic.Role.Grain
-			_, err = db.Engine.Table(roleRes).Insert(roleRes)
+			_, err = session.Table(roleRes).Insert(roleRes)
 			if err != nil {
 				log.Println("插入角色资源异常", err)
 				return common.New(constant.DBError, "数据库错误")
@@ -56,16 +63,29 @@ func (r *roleService) EnterServer(uid int, rsp *model.EnterServerRsp, conn net.W
 			return common.New(constant.DBError, "数据库错误")
 		}
 		rsp.Token = token
-		conn.SetProperty("role", role)
-		if err := RoleAttrService.TryCreate(rid, conn); err != nil {
+		req.Conn.SetProperty("role", role)
+		if err := RoleAttrService.TryCreate(rid, req); err != nil {
+			err := session.Rollback()
+			if err != nil {
+				log.Println("事务回滚出错", err)
+			}
 			return common.New(constant.DBError, "数据库错误")
 		}
 		// 初始化城池
-		if err := RoleCityService.InitCity(rid, role.NickName, conn); err != nil {
+		if err := RoleCityService.InitCity(rid, role.NickName, req); err != nil {
+			err := session.Rollback()
+			if err != nil {
+				log.Println("事务回滚出错", err)
+			}
 			return common.New(constant.DBError, "数据库错误")
 		}
 	} else {
 		return common.New(constant.RoleNotExist, "角色不存在")
+	}
+	err = session.Commit()
+	if err != nil {
+		log.Println("事务提交提交出错", err)
+		return common.New(constant.DBError, "数据库错误")
 	}
 	return nil
 }

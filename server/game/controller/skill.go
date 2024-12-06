@@ -5,6 +5,7 @@ import (
 	"Turing-Go/net"
 	"Turing-Go/server/common"
 	"Turing-Go/server/game/logic"
+	"Turing-Go/server/game/middleware"
 	"Turing-Go/server/game/model"
 	"Turing-Go/server/game/model/data"
 )
@@ -16,7 +17,8 @@ type skillController struct {
 
 func (w *skillController) InitRouter(router *net.Router) {
 	r := router.Group("skill")
-	r.AddRouter("list", w.list)
+	r.Use(middleware.Log())
+	r.AddRouter("list", w.list, middleware.CheckRole())
 }
 
 func (w *skillController) list(req *net.WsMsgReq, resp *net.WsMsgResp) {

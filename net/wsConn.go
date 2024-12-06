@@ -1,5 +1,7 @@
 package net
 
+import "sync"
+
 type ReqBody struct {
 	Seq   int64       `json:"seq"`
 	Name  string      `json:"name"`
@@ -14,9 +16,32 @@ type RespBody struct {
 	Msg  interface{} `json:"msg"`
 }
 
+type WsContext struct {
+	mutex    sync.RWMutex
+	property map[string]interface{}
+}
+
+func (w *WsContext) Set(name string, value interface{}) {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+	w.property[name] = value
+}
+
+func (w *WsContext) Get(name string) interface{} {
+	w.mutex.RLock()
+	defer w.mutex.RUnlock()
+	value, ok := w.property[name]
+	if !ok {
+		return nil
+	}
+	return value
+
+}
+
 type WsMsgReq struct {
-	Body *ReqBody
-	Conn WSConn
+	Body    *ReqBody
+	Conn    WSConn
+	Context *WsContext
 }
 
 type WsMsgResp struct {

@@ -5,6 +5,7 @@ import (
 	"Turing-Go/net"
 	"Turing-Go/server/common"
 	"Turing-Go/server/game/logic"
+	"Turing-Go/server/game/middleware"
 	"Turing-Go/server/game/model"
 	"Turing-Go/server/game/model/data"
 )
@@ -16,7 +17,8 @@ type warController struct {
 
 func (w *warController) InitRouter(router *net.Router) {
 	r := router.Group("war")
-	r.AddRouter("report", w.report)
+	r.Use(middleware.Log())
+	r.AddRouter("report", w.report, middleware.CheckRole())
 }
 
 func (w *warController) report(req *net.WsMsgReq, resp *net.WsMsgResp) {

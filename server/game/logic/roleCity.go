@@ -9,6 +9,7 @@ import (
 	"Turing-Go/server/game/global"
 	"Turing-Go/server/game/model"
 	"Turing-Go/server/game/model/data"
+	"github.com/go-xorm/xorm"
 	"log"
 	"math/rand"
 	"time"
@@ -19,7 +20,8 @@ var RoleCityService = &roleCityService{}
 type roleCityService struct {
 }
 
-func (r *roleCityService) InitCity(rid int, nickName string, conn net.WSConn) error {
+func (r *roleCityService) InitCity(rid int, nickName string, req *net.WsMsgReq) error {
+	session := req.Context.Get("session").(*xorm.Session)
 	roleCity := data.MapRoleCity{}
 	ok, err := db.Engine.Table(roleCity).Where("rid=?", rid).Get(&roleCity)
 	if err != nil {
@@ -36,11 +38,22 @@ func (r *roleCityService) InitCity(rid int, nickName string, conn net.WSConn) er
 				roleCity.CurDurable = gameConfig.Basic.City.Durable
 				roleCity.CreatedAt = time.Now()
 				roleCity.IsMain = 1
-				_, err := db.Engine.Table(roleCity).Insert(&roleCity)
+				if session != nil {
+					_, err = session.Table(roleCity).Insert(&roleCity)
+				} else {
+					_, err = db.Engine.Table(roleCity).Insert(&roleCity)
+				}
 				if err != nil {
 					log.Println("插入角色城池异常", err)
 					return common.New(constant.DBError, "数据库错误")
 				}
+
+				err := CityFacilityService.TryCreate(roleCity.CityId, rid, session)
+				if err != nil {
+					log.Println("插入城市设施异常", err)
+					return common.New(constant.DBError, "数据库错误")
+				}
+
 				break
 			}
 		}

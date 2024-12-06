@@ -5,6 +5,7 @@ import (
 	"Turing-Go/net"
 	"Turing-Go/server/common"
 	"Turing-Go/server/game/logic"
+	"Turing-Go/server/game/middleware"
 	"Turing-Go/server/game/model"
 	"Turing-Go/server/game/model/data"
 )
@@ -16,7 +17,8 @@ type generalController struct {
 
 func (g *generalController) InitRouter(router *net.Router) {
 	r := router.Group("general")
-	r.AddRouter("myGenerals", g.myGenerals)
+	r.Use(middleware.Log())
+	r.AddRouter("myGenerals", g.myGenerals, middleware.CheckRole())
 }
 
 func (g *generalController) myGenerals(req *net.WsMsgReq, resp *net.WsMsgResp) {
