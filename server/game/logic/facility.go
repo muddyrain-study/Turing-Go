@@ -60,3 +60,43 @@ func (c *cityFacilityService) TryCreate(cid, rid int, session *xorm.Session) err
 	}
 	return nil
 }
+
+func (c *cityFacilityService) GetByRId(rid int) ([]*data.CityFacility, error) {
+	cf := make([]*data.CityFacility, 0)
+	err := db.Engine.Table(new(data.CityFacility)).Where("rid=?", rid).Find(&cf)
+	if err != nil {
+		log.Println(err)
+		return cf, common.New(constant.DBError, "数据库错误")
+	}
+	return cf, nil
+}
+
+func (c *cityFacilityService) GetYield(rid int) data.Yield {
+	cfs, err := c.GetByRId(rid)
+	var y data.Yield
+	if err != nil {
+		for _, cf := range cfs {
+			for _, f := range cf.Facility() {
+				if f.GetLevel() > 0 {
+					values := gameConfig.FacilityConf.GetValues(f.Type, f.GetLevel())
+					additions := gameConfig.FacilityConf.GetAdditions(f.Type)
+					for i, aType := range additions {
+						if aType == gameConfig.TypeWood {
+							y.Wood += values[i]
+						} else if aType == gameConfig.TypeGrain {
+							y.Grain += values[i]
+						} else if aType == gameConfig.TypeIron {
+							y.Iron += values[i]
+						} else if aType == gameConfig.TypeStone {
+							y.Stone += values[i]
+						} else if aType == gameConfig.TypeTax {
+							y.Gold += values[i]
+						}
+					}
+				}
+			}
+		}
+		log.Println("cityFacilityService GetYield err", err)
+	}
+	return y
+}

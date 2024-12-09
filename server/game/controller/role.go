@@ -70,11 +70,7 @@ func (r *roleController) myProperty(req *net.WsMsgReq, resp *net.WsMsgResp) {
 	rid := role.(data.Role).RId
 	respObj := &model.MyRolePropertyRsp{}
 	// 查询资源
-	respObj.RoleRes, err = logic.RoleService.GetRoleRes(rid)
-	if err != nil {
-		resp.Body.Code = err.(*common.MyError).Code()
-		return
-	}
+	respObj.RoleRes = (logic.RoleResService.GetRoleRes(rid).ToModel()).(model.RoleRes)
 	// 城池
 	respObj.Citys, err = logic.RoleCityService.GetRoleCities(rid)
 	if err != nil {

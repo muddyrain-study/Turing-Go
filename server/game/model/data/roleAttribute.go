@@ -1,9 +1,35 @@
 package data
 
 import (
+	"Turing-Go/db"
 	"Turing-Go/server/game/model"
+	"log"
 	"time"
 )
+
+var RoleAttrDao = &roleAttrDao{
+	raChan: make(chan *RoleAttribute, 100),
+}
+
+type roleAttrDao struct {
+	raChan chan *RoleAttribute
+}
+
+func (d roleAttrDao) running() {
+	for {
+		select {
+		case ra := <-d.raChan:
+			_, err := db.Engine.Table(new(RoleAttribute)).ID(ra.Id).Cols("parent_id", "collect_times", "last_collect_time", "pos_tags").Update(ra)
+			if err != nil {
+				log.Println("更新角色属性异常 ", err)
+			}
+		}
+	}
+}
+
+func init() {
+	go RoleAttrDao.running()
+}
 
 type RoleAttribute struct {
 	Id              int            `xorm:"id pk autoincr"`
@@ -18,4 +44,8 @@ type RoleAttribute struct {
 
 func (r *RoleAttribute) TableName() string {
 	return "role_attribute"
+}
+
+func (r *RoleAttribute) SyncExecute() {
+	RoleAttrDao.raChan <- r
 }

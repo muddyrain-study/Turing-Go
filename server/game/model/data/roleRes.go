@@ -1,6 +1,31 @@
 package data
 
-import "Turing-Go/server/game/model"
+import (
+	"Turing-Go/db"
+	"Turing-Go/server/game/model"
+	"log"
+)
+
+var RoleResDao = &roleResDao{
+	rrChannel: make(chan *RoleRes, 100),
+}
+
+type roleResDao struct {
+	rrChannel chan *RoleRes
+}
+
+func (d *roleResDao) running() {
+	for {
+		select {
+		case rr := <-d.rrChannel:
+			_, err := db.Engine.Table(new(RoleRes)).ID(rr.Id).Cols("wood", "iron", "stone",
+				"grain", "gold", "decree").Update(rr)
+			if err != nil {
+				log.Println("更新角色资源异常 ", err)
+			}
+		}
+	}
+}
 
 type RoleRes struct {
 	Id     int `xorm:"id pk autoincr"`
@@ -25,12 +50,26 @@ func (r *RoleRes) ToModel() interface{} {
 	p.Iron = r.Iron
 	p.Wood = r.Wood
 	p.Decree = r.Decree
-
-	p.GoldYield = 100
-	p.GrainYield = 100
-	p.StoneYield = 100
-	p.IronYield = 100
-	p.WoodYield = 100
+	yield := GetYield(r.RId)
+	p.GoldYield = yield.Gold
+	p.GrainYield = yield.Grain
+	p.StoneYield = yield.Stone
+	p.IronYield = yield.Iron
+	p.WoodYield = yield.Wood
 	p.DepotCapacity = 10000
 	return p
+}
+func init() {
+	go RoleResDao.running()
+}
+func (r *RoleRes) SyncExecute() {
+	RoleResDao.rrChannel <- r
+}
+
+type Yield struct {
+	Wood  int
+	Iron  int
+	Stone int
+	Grain int
+	Gold  int
 }

@@ -22,6 +22,17 @@ type roleAttrService struct {
 	mutex sync.RWMutex
 }
 
+func (r *roleAttrService) Load() {
+	ras := make([]*data.RoleAttribute, 0)
+	err := db.Engine.Table(new(data.RoleAttribute)).Find(&ras)
+	if err != nil {
+		log.Println("加载角色属性异常", err)
+		return
+	}
+	for _, v := range ras {
+		r.attrs[v.RId] = v
+	}
+}
 func (r *roleAttrService) TryCreate(rid int, req *net.WsMsgReq) error {
 	session := req.Context.Get("session").(*xorm.Session)
 	roleAttribute := data.RoleAttribute{}
@@ -76,4 +87,14 @@ func (r *roleAttrService) GetTagList(rid int) ([]model.PosTag, error) {
 		}
 	}
 	return posTags, nil
+}
+
+func (r *roleAttrService) Get(rid int) *data.RoleAttribute {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	ra, ok := r.attrs[rid]
+	if !ok {
+		return nil
+	}
+	return ra
 }

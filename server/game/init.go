@@ -19,9 +19,12 @@ func Init() {
 	gameConfig.FacilityConf.Load()
 	gameConfig.Skill.Load()
 	general.General.Load()
+	logic.BeforeInit()
 	logic.RoleBuildService.Load()
 	logic.RoleCityService.Load()
+	logic.RoleAttrService.Load()
 	initRouter()
+
 }
 
 func initRouter() {
@@ -31,4 +34,5 @@ func initRouter() {
 	controller.ArmyController.InitRouter(Router)
 	controller.WarController.InitRouter(Router)
 	controller.SkillController.InitRouter(Router)
+	controller.InteriorController.InitRouter(Router)
 }
