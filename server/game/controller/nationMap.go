@@ -6,7 +6,9 @@ import (
 	"Turing-Go/server/common"
 	"Turing-Go/server/game/gameConfig"
 	"Turing-Go/server/game/logic"
+	"Turing-Go/server/game/middleware"
 	"Turing-Go/server/game/model"
+	"Turing-Go/server/game/model/data"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -18,7 +20,7 @@ type nationMapController struct {
 func (r *nationMapController) InitRouter(router *net.Router) {
 	g := router.Group("nationMap")
 	g.AddRouter("config", r.config)
-	g.AddRouter("scanBlock", r.scanBlock)
+	g.AddRouter("scanBlock", r.scanBlock, middleware.CheckRole())
 }
 
 func (r *nationMapController) config(req *net.WsMsgReq, rsp *net.WsMsgResp) {
@@ -69,7 +71,13 @@ func (*nationMapController) scanBlock(req *net.WsMsgReq, resp *net.WsMsgResp) {
 		return
 	}
 	respObj.MCBuilds = mrc
-	armies, err := logic.ArmyService.ScanBlock(reqObj)
+	role, err := req.Conn.GetProperty("role")
+	if err != nil {
+		resp.Body.Code = constant.SessionInvalid
+		return
+	}
+	rid := role.(data.Role).RId
+	armies, err := logic.ArmyService.ScanBlock(rid, reqObj)
 	if err != nil {
 		resp.Body.Code = err.(*common.MyError).Code()
 		return

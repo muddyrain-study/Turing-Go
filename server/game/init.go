@@ -20,6 +20,7 @@ func Init() {
 	gameConfig.Skill.Load()
 	general.General.Load()
 	logic.RoleBuildService.Load()
+	logic.RoleCityService.Load()
 	initRouter()
 }
 

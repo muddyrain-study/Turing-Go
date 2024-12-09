@@ -10,16 +10,19 @@ import (
 	"Turing-Go/server/game/model/data"
 	"Turing-Go/utils"
 	"log"
+	"sync"
 )
 
 var RoleBuildService = &roleBuildService{
 	posRB:  make(map[int]*data.MapRoleBuild),
 	roleRB: make(map[int][]*data.MapRoleBuild),
+	mutex:  sync.RWMutex{},
 }
 
 type roleBuildService struct {
 	posRB  map[int]*data.MapRoleBuild
 	roleRB map[int][]*data.MapRoleBuild
+	mutex  sync.RWMutex
 }
 
 func (r *roleBuildService) Load() {
@@ -96,10 +99,10 @@ func (r *roleBuildService) ScanBlock(req *model.ScanBlockReq) ([]model.MapRoleBu
 	if x < 0 || x >= global.MapWidth || y < 0 || y >= global.MapHeight {
 		return mrbs, nil
 	}
-
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 	maxX := utils.MinInt(global.MapWidth, x+length-1)
 	maxY := utils.MinInt(global.MapHeight, y+length-1)
-
 	for i := x - length; i <= maxX; i++ {
 		for j := y - length; j <= maxY; j++ {
 			posId := global.ToPosition(i, j)

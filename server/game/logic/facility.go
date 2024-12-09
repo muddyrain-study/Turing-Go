@@ -17,9 +17,8 @@ type cityFacilityService struct {
 }
 
 func (c *cityFacilityService) TryCreate(cid, rid int, session *xorm.Session) error {
-
 	cf := &data.CityFacility{}
-	ok, err := db.Engine.Table(cf).Where("cid=?").Get(cf)
+	ok, err := db.Engine.Table(cf).Where("cityId=?", cid).Get(cf)
 	if err != nil {
 		log.Println(err)
 		return common.New(constant.DBError, "数据库错误")
@@ -52,6 +51,11 @@ func (c *cityFacilityService) TryCreate(cid, rid int, session *xorm.Session) err
 	}
 	if err != nil {
 		log.Println("插入城市设施异常", err)
+		return common.New(constant.DBError, "数据库错误")
+	}
+	err = session.Commit()
+	if err != nil {
+		log.Println("提交事务异常", err)
 		return common.New(constant.DBError, "数据库错误")
 	}
 	return nil

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"Turing-Go/constant"
+	"Turing-Go/db"
 	"Turing-Go/net"
 	"Turing-Go/server/common"
 	"Turing-Go/server/game/logic"
@@ -11,6 +12,7 @@ import (
 	"Turing-Go/utils"
 	"github.com/mitchellh/mapstructure"
 	"log"
+	"time"
 )
 
 var RoleController = &roleController{}
@@ -24,6 +26,7 @@ func (r *roleController) InitRouter(router *net.Router) {
 	g.AddRouter("enterServer", r.enterServer)
 	g.AddRouter("myProperty", r.myProperty, middleware.CheckRole())
 	g.AddRouter("posTagList", r.posTagList)
+	g.AddRouter("create", r.create)
 }
 
 func (r *roleController) enterServer(req *net.WsMsgReq, rsp *net.WsMsgResp) {
@@ -47,6 +50,8 @@ func (r *roleController) enterServer(req *net.WsMsgReq, rsp *net.WsMsgResp) {
 	uid := claims.Uid
 	err = logic.RoleService.EnterServer(uid, rspObj, req)
 	if err != nil {
+		rspObj.Time = time.Now().UnixMilli()
+		rsp.Body.Msg = rspObj
 		rsp.Body.Code = err.(*common.MyError).Code()
 		return
 	}
@@ -118,6 +123,40 @@ func (r *roleController) posTagList(req *net.WsMsgReq, resp *net.WsMsgResp) {
 		return
 	}
 	respObj.PosTags = pts
+	resp.Body.Code = constant.OK
+	resp.Body.Msg = respObj
+}
+
+func (r *roleController) create(req *net.WsMsgReq, resp *net.WsMsgResp) {
+	reqObj := &model.CreateRoleReq{}
+	respObj := &model.CreateRoleRsp{}
+	mapstructure.Decode(req.Body.Msg, reqObj)
+
+	resp.Body.Seq = req.Body.Seq
+	resp.Body.Name = req.Body.Name
+	role := &data.Role{}
+	ok, err := db.Engine.Where("uid=?", reqObj.UId).Get(role)
+	if err != nil {
+		resp.Body.Code = constant.DBError
+		return
+	}
+	if ok {
+		resp.Body.Code = constant.RoleAlreadyCreate
+		return
+	}
+	role.UId = reqObj.UId
+	role.Sex = reqObj.Sex
+	role.NickName = reqObj.NickName
+	role.Balance = 0
+	role.HeadId = reqObj.HeadId
+	role.CreatedAt = time.Now()
+	role.LoginTime = time.Now()
+	_, err = db.Engine.InsertOne(role)
+	if err != nil {
+		resp.Body.Code = constant.DBError
+		return
+	}
+	respObj.Role = role.ToModel().(model.Role)
 	resp.Body.Code = constant.OK
 	resp.Body.Msg = respObj
 }
