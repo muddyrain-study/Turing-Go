@@ -113,3 +113,7 @@ func (c *cityFacilityService) GetFacilities(rid, cid int) []data.Facility {
 	}
 	return nil
 }
+
+func (c *cityFacilityService) UpFacility(rid, cid int, fType int8) (*data.Facility, error) {
+	return nil, nil
+}
