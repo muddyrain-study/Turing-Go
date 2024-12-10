@@ -89,3 +89,17 @@ func (r *roleService) EnterServer(uid int, rsp *model.EnterServerRsp, req *net.W
 	}
 	return nil
 }
+
+func (r *roleService) Get(rid int) (*data.Role, error) {
+	role := &data.Role{}
+	ok, err := db.Engine.Table(role).Where("rid=?", rid).Get(role)
+	if err != nil {
+		log.Println("查询角色异常", err)
+		return nil, common.New(constant.DBError, "数据库错误")
+	}
+	if ok {
+		return role, nil
+	} else {
+		return nil, common.New(constant.RoleNotExist, "角色不存在")
+	}
+}

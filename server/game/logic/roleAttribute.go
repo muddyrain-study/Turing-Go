@@ -30,6 +30,16 @@ func (r *roleAttrService) Load() {
 		return
 	}
 	for _, v := range ras {
+		uns := CoalitionService.ListCoalition()
+		for _, un := range uns {
+			for _, ma := range un.MemberArray {
+				ra, ok := r.attrs[ma]
+				if ok {
+					ra.UnionId = un.Id
+					r.attrs[ma] = ra
+				}
+			}
+		}
 		r.attrs[v.RId] = v
 	}
 }
@@ -56,9 +66,9 @@ func (r *roleAttrService) TryCreate(rid int, req *net.WsMsgReq) error {
 			return common.New(constant.DBError, "数据库错误")
 		}
 	}
-	r.mutex.Lock()
-	r.attrs[rid] = &roleAttribute
-	r.mutex.Unlock()
+	//r.mutex.Lock()
+	//r.attrs[rid] = &roleAttribute
+	//r.mutex.Unlock()
 	return nil
 
 }
@@ -97,4 +107,14 @@ func (r *roleAttrService) Get(rid int) *data.RoleAttribute {
 		return nil
 	}
 	return ra
+}
+
+func (r *roleAttrService) GetUnion(rid int) int {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+	ra, ok := r.attrs[rid]
+	if !ok {
+		return 0
+	}
+	return ra.UnionId
 }
