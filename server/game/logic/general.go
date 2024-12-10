@@ -50,6 +50,25 @@ func (g *generalService) GetGenerals(rid int) ([]model.General, error) {
 	}
 	return modelMrs, nil
 }
+func (g *generalService) Draw(rid, nums int) []model.General {
+	mrs := make([]*data.General, 0)
+	for i := 0; i < nums; i++ {
+		cfgId := general.General.Rand()
+		if cfgId != 0 {
+			gen, err := g.newGeneral(cfgId, rid, 0)
+			if err != nil {
+				log.Println("武将生成出错", err)
+				continue
+			}
+			mrs = append(mrs, gen)
+		}
+	}
+	modelMrs := make([]model.General, 0)
+	for _, v := range mrs {
+		modelMrs = append(modelMrs, v.ToModel().(model.General))
+	}
+	return modelMrs
+}
 
 const (
 	GeneralNormal      = 0 //正常

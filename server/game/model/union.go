@@ -38,3 +38,24 @@ type Member struct {
 	X     int    `json:"x"`
 	Y     int    `json:"y"`
 }
+
+type InfoReq struct {
+	Id int `json:"id"` //联盟id
+}
+type InfoRsp struct {
+	Id   int   `json:"id"` //联盟id
+	Info Union `json:"info"`
+}
+
+type ApplyReq struct {
+	Id int `json:"id"`
+}
+type ApplyRsp struct {
+	Id     int         `json:"id"`
+	Applys []ApplyItem `json:"applys"`
+}
+type ApplyItem struct {
+	Id       int    `json:"id"`
+	RId      int    `json:"rid"`
+	NickName string `json:"nick_name"`
+}

@@ -39,3 +39,16 @@ func (r *roleResService) GetYield(rid int) data.Yield {
 
 	return y
 }
+
+func (r *roleResService) IsEnoughGold(rid int, cost int) bool {
+	rr := r.GetRoleRes(rid)
+	return rr.Gold >= cost
+}
+
+func (r *roleResService) CostGold(rid int, cost int) {
+	rr := r.GetRoleRes(rid)
+	if rr.Gold >= cost {
+		rr.Gold -= cost
+		rr.SyncExecute()
+	}
+}
