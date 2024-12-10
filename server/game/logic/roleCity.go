@@ -21,22 +21,23 @@ var RoleCityService = &roleCityService{
 	posCity:  make(map[int]*data.MapRoleCity),
 	roleCity: make(map[int][]*data.MapRoleCity),
 	mutex:    sync.RWMutex{},
+	dbCity:   make(map[int]*data.MapRoleCity),
 }
 
 type roleCityService struct {
 	posCity  map[int]*data.MapRoleCity
 	roleCity map[int][]*data.MapRoleCity
 	mutex    sync.RWMutex
+	dbCity   map[int]*data.MapRoleCity
 }
 
 func (r *roleCityService) Load() {
-	dbCity := make(map[int]*data.MapRoleCity)
-	err := db.Engine.Find(dbCity)
+	err := db.Engine.Find(&r.dbCity)
+	dbCity := r.dbCity
 	if err != nil {
 		log.Println("RoleCityService load role_city table error")
 		return
 	}
-
 	//转成posCity、roleCity
 	for _, v := range dbCity {
 		posId := global.ToPosition(v.X, v.Y)
@@ -90,6 +91,7 @@ func (r *roleCityService) InitCity(rid int, nickName string, req *net.WsMsgReq) 
 				} else {
 					r.roleCity[rid] = append(r.roleCity[rid], &roleCity)
 				}
+				r.dbCity[roleCity.CityId] = &roleCity
 				err = CityFacilityService.TryCreate(roleCity.CityId, rid, session)
 				if err != nil {
 					log.Println("插入城市设施异常", err)
@@ -177,4 +179,14 @@ func (r *roleCityService) ScanBlock(req *model.ScanBlockReq) ([]model.MapRoleCit
 		}
 	}
 	return rb, nil
+}
+
+func (r *roleCityService) Get(id int) (*data.MapRoleCity, bool) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+	city, ok := r.dbCity[id]
+	if ok {
+		return city, ok
+	}
+	return nil, ok
 }

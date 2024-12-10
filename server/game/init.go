@@ -25,7 +25,6 @@ func Init() {
 	logic.RoleCityService.Load()
 	logic.RoleAttrService.Load()
 	initRouter()
-
 }
 
 func initRouter() {
@@ -37,4 +36,5 @@ func initRouter() {
 	controller.SkillController.InitRouter(Router)
 	controller.InteriorController.InitRouter(Router)
 	controller.UnionController.InitRouter(Router)
+	controller.CityController.InitRouter(Router)
 }

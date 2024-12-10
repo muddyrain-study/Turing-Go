@@ -38,6 +38,9 @@ func (c *CityFacility) TableName() string {
 
 func (c *CityFacility) Facility() []Facility {
 	facilities := make([]Facility, 0)
-	json.Unmarshal([]byte(c.Facilities), &facilities)
+	err := json.Unmarshal([]byte(c.Facilities), &facilities)
+	if err != nil {
+		return nil
+	}
 	return facilities
 }

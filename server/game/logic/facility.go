@@ -100,3 +100,16 @@ func (c *cityFacilityService) GetYield(rid int) data.Yield {
 	}
 	return y
 }
+
+func (c *cityFacilityService) GetFacilities(rid, cid int) []data.Facility {
+	cf := &data.CityFacility{}
+	ok, err := db.Engine.Table(new(data.CityFacility)).Where("rid=? and cityId=?", rid, cid).Get(cf)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	if ok {
+		return cf.Facility()
+	}
+	return nil
+}
