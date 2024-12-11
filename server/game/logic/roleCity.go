@@ -190,3 +190,17 @@ func (r *roleCityService) Get(id int) (*data.MapRoleCity, bool) {
 	}
 	return nil, ok
 }
+
+func (r *roleCityService) GetMainCity(id int) *data.MapRoleCity {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+	cities, ok := r.roleCity[id]
+	if ok {
+		for _, v := range cities {
+			if v.IsMain == 1 {
+				return v
+			}
+		}
+	}
+	return nil
+}

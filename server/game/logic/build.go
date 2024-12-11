@@ -70,9 +70,8 @@ func (r *roleBuildService) Load() {
 		_, ok := r.roleRB[v.RId]
 		if !ok {
 			r.roleRB[v.RId] = make([]*data.MapRoleBuild, 0)
-		} else {
-			r.roleRB[v.RId] = append(r.roleRB[v.RId], v)
 		}
+		r.roleRB[v.RId] = append(r.roleRB[v.RId], v)
 	}
 }
 

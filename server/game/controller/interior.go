@@ -8,6 +8,7 @@ import (
 	"Turing-Go/server/game/middleware"
 	"Turing-Go/server/game/model"
 	"Turing-Go/server/game/model/data"
+	"github.com/mitchellh/mapstructure"
 	"time"
 )
 
@@ -21,6 +22,7 @@ func (r *interiorController) InitRouter(router *net.Router) {
 	g.Use(middleware.Log())
 	g.AddRouter("openCollect", r.openCollect, middleware.CheckRole())
 	g.AddRouter("collect", r.collect, middleware.CheckRole())
+	g.AddRouter("transform", r.transform, middleware.CheckRole())
 }
 
 func (r *interiorController) openCollect(req *net.WsMsgReq, resp *net.WsMsgResp) {
@@ -96,4 +98,51 @@ func (r *interiorController) collect(req *net.WsMsgReq, resp *net.WsMsgResp) {
 		ti := ra.LastCollectTime.Add(time.Duration(interval) * time.Second)
 		respObj.NextTime = ti.UnixMilli()
 	}
+}
+
+// 交易
+func (r *interiorController) transform(req *net.WsMsgReq, resp *net.WsMsgResp) {
+	// 查询对应的资源
+	// 查询集市是否符合要求
+	// form 减去 to 增加
+	reqObj := &model.TransformReq{}
+	rspObj := &model.TransformRsp{}
+
+	err := mapstructure.Decode(req.Body.Msg, reqObj)
+	if err != nil {
+		resp.Body.Code = constant.InvalidParam
+		return
+	}
+	resp.Body.Msg = rspObj
+	resp.Body.Code = constant.OK
+	_role, _ := req.Conn.GetProperty("role")
+	role := _role.(data.Role)
+	roleRes := logic.RoleResService.GetRoleRes(role.RId)
+	if roleRes == nil {
+		resp.Body.Code = constant.DBError
+		return
+	}
+	rc := logic.RoleCityService.GetMainCity(role.RId)
+	if rc == nil {
+		resp.Body.Code = constant.CityNotExist
+		return
+	}
+	level := logic.CityFacilityService.GetFacilityLevel(rc.CityId, gameConfig.JiShi)
+	if level <= 0 {
+		resp.Body.Code = constant.NotHasJiShi
+		return
+	}
+	roleRes.Wood -= reqObj.From[0]
+	roleRes.Wood += reqObj.To[0]
+
+	roleRes.Iron -= reqObj.From[1]
+	roleRes.Iron += reqObj.To[1]
+
+	roleRes.Stone -= reqObj.From[2]
+	roleRes.Stone += reqObj.To[2]
+
+	roleRes.Grain -= reqObj.From[3]
+	roleRes.Grain += reqObj.To[3]
+
+	roleRes.SyncExecute()
 }

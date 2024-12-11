@@ -170,3 +170,29 @@ func (c *cityFacilityService) Get(rid int, cid int) *data.CityFacility {
 	}
 	return nil
 }
+func (c *cityFacilityService) GetByCid(cid int) *data.CityFacility {
+	cf := &data.CityFacility{}
+	ok, err := db.Engine.Table(new(data.CityFacility)).Where("cityId=?", cid).Get(cf)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	if ok {
+		return cf
+	}
+	return nil
+}
+
+func (c *cityFacilityService) GetFacilityLevel(cid int, fType int8) int8 {
+	cf := c.GetByCid(cid)
+	if cf == nil {
+		return 0
+	}
+	facs := cf.Facility1()
+	for _, v := range facs {
+		if v.Type == fType {
+			return v.GetLevel()
+		}
+	}
+	return 0
+}
