@@ -52,3 +52,21 @@ func (r *roleResService) CostGold(rid int, cost int) {
 		rr.SyncExecute()
 	}
 }
+
+func (r *roleResService) TryUseNeed(rid int, need gameConfig.NeedRes) bool {
+	rr := r.GetRoleRes(rid)
+	if need.Decree <= rr.Decree && need.Grain <= rr.Grain &&
+		need.Stone <= rr.Stone && need.Wood <= rr.Wood &&
+		need.Iron <= rr.Iron && need.Gold <= rr.Gold {
+		rr.Decree -= need.Decree
+		rr.Iron -= need.Iron
+		rr.Wood -= need.Wood
+		rr.Stone -= need.Stone
+		rr.Grain -= need.Grain
+		rr.Gold -= need.Gold
+		rr.SyncExecute()
+		return true
+	} else {
+		return false
+	}
+}

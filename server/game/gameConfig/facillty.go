@@ -104,7 +104,7 @@ func (f *facilityConf) Load() {
 		log.Println("城池设施格式定义失败")
 		panic(err)
 	}
-	f.facilitys = make(map[int8]*facility)
+	f.facilitys = make(map[int8]*facility, len(f.List))
 
 	files, err := os.ReadDir(cfPath)
 	if err != nil {
@@ -119,16 +119,16 @@ func (f *facilityConf) Load() {
 		if name == "facility.json" {
 			continue
 		}
-		data, err := os.ReadFile(cf)
+		data, err := os.ReadFile(cfPath + v.Name())
 		if err != nil {
 			panic(err)
 		}
-		facility := &facility{}
-		err = json.Unmarshal(data, facility)
+		fac := &facility{}
+		err = json.Unmarshal(data, fac)
 		if err != nil {
 			panic(err)
 		}
-		f.facilitys[facility.Type] = facility
+		f.facilitys[fac.Type] = fac
 	}
 }
 
@@ -172,4 +172,21 @@ func (f *facilityConf) GetAdditions(fType int8) []int8 {
 	} else {
 		return []int8{}
 	}
+}
+
+func (f *facilityConf) MaxLevel(fType int8) int {
+	fa, ok := f.facilitys[fType]
+	if ok {
+		return len(fa.Levels)
+	} else {
+		return 0
+	}
+}
+
+func (f *facilityConf) Need(fType int8, level int8) NeedRes {
+	fa, ok := f.facilitys[fType]
+	if ok {
+		return fa.Levels[level].Need
+	}
+	return NeedRes{}
 }

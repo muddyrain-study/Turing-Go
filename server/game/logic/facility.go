@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"github.com/go-xorm/xorm"
 	"log"
+	"time"
 )
 
 var CityFacilityService = &cityFacilityService{}
@@ -114,6 +115,58 @@ func (c *cityFacilityService) GetFacilities(rid, cid int) []data.Facility {
 	return nil
 }
 
+func (c *cityFacilityService) GetFacilities1(rid, cid int) []*data.Facility {
+	cf := &data.CityFacility{}
+	ok, err := db.Engine.Table(new(data.CityFacility)).Where("rid=? and cityId=?", rid, cid).Get(cf)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	if ok {
+		return cf.Facility1()
+	}
+	return nil
+}
+
 func (c *cityFacilityService) UpFacility(rid, cid int, fType int8) (*data.Facility, error) {
-	return nil, nil
+	facs := c.GetFacilities1(rid, cid)
+	result := &data.Facility{}
+	for _, fac := range facs {
+		if fac.Type == fType {
+			// 判断是否可以升级 该设施是否在升级中，是否自愿够
+			if !fac.CanUp() {
+				return nil, common.New(constant.UpError, "升级失败")
+			}
+			maxLevel := fac.GetMaxLevel(fType)
+			if fac.GetLevel() >= int8(maxLevel) {
+				return nil, common.New(constant.UpError, "已经是最高等级")
+			}
+			// 先判断资源使用多少，再判断是否够
+			need := gameConfig.FacilityConf.Need(fType, fac.GetLevel()+1)
+			ok := RoleResService.TryUseNeed(rid, need)
+			if !ok {
+				return nil, common.New(constant.UpError, "资源不足")
+			}
+			fac.UpTime = time.Now().Unix()
+			result = fac
+		}
+	}
+	jsonByte, _ := json.Marshal(facs)
+	cfac := c.Get(rid, cid)
+	cfac.Facilities = string(jsonByte)
+	cfac.SyncExecute()
+	return result, nil
+}
+
+func (c *cityFacilityService) Get(rid int, cid int) *data.CityFacility {
+	cf := &data.CityFacility{}
+	ok, err := db.Engine.Table(new(data.CityFacility)).Where("rid=? and cityId=?", rid, cid).Get(cf)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	if ok {
+		return cf
+	}
+	return nil
 }

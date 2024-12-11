@@ -1,8 +1,10 @@
 package data
 
 import (
+	"Turing-Go/db"
 	"Turing-Go/server/game/gameConfig"
 	"encoding/json"
+	"log"
 	"time"
 )
 
@@ -13,7 +15,7 @@ type Facility struct {
 	UpTime       int64  `json:"up_time"` //升级的时间戳，0表示该等级已经升级完成了
 }
 
-func (f Facility) GetLevel() int8 {
+func (f *Facility) GetLevel() int8 {
 	if f.UpTime > 0 {
 		cur := time.Now().Unix()
 		cost := gameConfig.FacilityConf.CostTime(f.Type, f.PrivateLevel+1)
@@ -23,6 +25,15 @@ func (f Facility) GetLevel() int8 {
 		}
 	}
 	return f.PrivateLevel
+}
+
+func (f *Facility) CanUp() bool {
+	f.GetLevel()
+	return f.UpTime == 0
+}
+
+func (f *Facility) GetMaxLevel(fType int8) int {
+	return gameConfig.FacilityConf.MaxLevel(fType)
 }
 
 type CityFacility struct {
@@ -43,4 +54,41 @@ func (c *CityFacility) Facility() []Facility {
 		return nil
 	}
 	return facilities
+}
+
+func (c *CityFacility) Facility1() []*Facility {
+	facilities := make([]*Facility, 0)
+	err := json.Unmarshal([]byte(c.Facilities), &facilities)
+	if err != nil {
+		return nil
+	}
+	return facilities
+}
+
+func (c *CityFacility) SyncExecute() {
+	CityFacDao.cfChan <- c
+}
+
+var CityFacDao = &cityFacDao{
+	cfChan: make(chan *CityFacility),
+}
+
+type cityFacDao struct {
+	cfChan chan *CityFacility
+}
+
+func (c *cityFacDao) running() {
+	for {
+		select {
+		case cf := <-c.cfChan:
+			_, err := db.Engine.Table(new(CityFacility)).ID(cf.Id).Cols("facilities").Update(cf)
+			if err != nil {
+				log.Println("cityFacDao running error", err)
+			}
+		}
+	}
+}
+
+func init() {
+	go CityFacDao.running()
 }

@@ -81,14 +81,14 @@ func (g *cityController) upFacility(req *net.WsMsgReq, resp *net.WsMsgResp) {
 		return
 	}
 
-	role := r.(*data.Role)
+	role := r.(data.Role)
 	if city.RId != role.RId {
 		resp.Body.Code = constant.CityNotMe
 		return
 	}
 
 	facs := logic.CityFacilityService.GetFacilities(role.RId, reqObj.CityId)
-	if facs != nil {
+	if facs == nil {
 		resp.Body.Code = constant.CityNotExist
 		return
 	}
