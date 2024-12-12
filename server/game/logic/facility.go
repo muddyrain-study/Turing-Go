@@ -196,3 +196,21 @@ func (c *cityFacilityService) GetFacilityLevel(cid int, fType int8) int8 {
 	}
 	return 0
 }
+
+func (c *cityFacilityService) GetCost(cid int) int8 {
+	cf := c.GetByCid(cid)
+	facility := cf.Facility()
+	var cost int
+	for _, f := range facility {
+		if f.GetLevel() > 0 {
+			values := gameConfig.FacilityConf.GetValues(f.Type, f.GetLevel())
+			additions := gameConfig.FacilityConf.GetAdditions(f.Type)
+			for i, aType := range additions {
+				if aType == gameConfig.TypeCost {
+					cost += values[i]
+				}
+			}
+		}
+	}
+	return int8(cost)
+}

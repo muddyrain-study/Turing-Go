@@ -37,6 +37,21 @@ func (g *armyService) GetArmies(rid int) ([]model.Army, error) {
 	return modelMrs, nil
 }
 
+func (g *armyService) GetDbArmies(rid int) ([]*data.Army, error) {
+	mrs := make([]*data.Army, 0)
+	mr := &data.Army{}
+	err := db.Engine.Table(mr).Where("rid=?", rid).Find(&mrs)
+	if err != nil {
+		log.Println("军队查询出错", err)
+		return nil, common.New(constant.DBError, "军队查询出错")
+	}
+	modelMrs := make([]*data.Army, 0)
+	for _, v := range mrs {
+		modelMrs = append(modelMrs, v)
+	}
+	return modelMrs, nil
+}
+
 func (g *armyService) GetArmiesByCity(rid int, cityId int) ([]model.Army, error) {
 	mrs := make([]data.Army, 0)
 	mr := &data.Army{}
@@ -84,6 +99,79 @@ func (g *armyService) ScanBlock(roleId int, req *model.ScanBlockReq) ([]model.Ar
 	}
 	g.passBy.RUnlock()
 	return out, nil
+}
+func (g *armyService) updateGenerals(armys ...*data.Army) {
+	for _, army := range armys {
+		army.Gens = make([]*data.General, 0)
+		for _, gid := range army.GeneralArray {
+			if gid == 0 {
+				army.Gens = append(army.Gens, nil)
+			} else {
+				g, _ := GeneralService.Get(gid)
+				army.Gens = append(army.Gens, g)
+			}
+		}
+	}
+}
+func (g *armyService) GetArmiesByCityAndOrder(rid int, cityId int, order int8) (*data.Army, bool) {
+	mr := &data.Army{}
+	ok, err := db.Engine.Table(mr).Where("rid=? AND cityId=? AND `order`=?", rid, cityId, order).Get(mr)
+	if err != nil {
+		log.Println("军队查询出错", err)
+		return nil, false
+	}
+	if ok {
+		g.updateGenerals(mr)
+		return mr, true
+	} else {
+		return nil, false
+	}
+}
+
+func (g *armyService) GetOrCreate(rid int, cid int, order int8) (*data.Army, bool) {
+	army, ok := g.GetArmiesByCityAndOrder(rid, cid, order)
+	if ok {
+		return army, true
+	}
+	//需要创建
+	army = &data.Army{
+		RId:                rid,
+		Order:              order,
+		CityId:             cid,
+		Generals:           `[0,0,0]`,
+		Soldiers:           `[0,0,0]`,
+		GeneralArray:       []int{0, 0, 0},
+		SoldierArray:       []int{0, 0, 0},
+		ConscriptCnts:      `[0,0,0]`,
+		ConscriptTimes:     `[0,0,0]`,
+		ConscriptCntArray:  []int{0, 0, 0},
+		ConscriptTimeArray: []int64{0, 0, 0},
+	}
+	g.updateGenerals(army)
+	_, err := db.Engine.Table(army).Insert(army)
+	if err == nil {
+		return army, true
+	} else {
+		log.Println("armyService GetCreate err", err)
+		return nil, false
+	}
+}
+
+func (g *armyService) IsRepeat(rid int, cfgId int) bool {
+	armys, err := g.GetDbArmies(rid)
+	if err != nil {
+		return true
+	}
+	for _, army := range armys {
+		for _, g := range army.Gens {
+			if g != nil {
+				if g.CfgId == cfgId && g.CityId != 0 {
+					return false
+				}
+			}
+		}
+	}
+	return true
 }
 
 func armyIsInView(rid, x, y int) bool {

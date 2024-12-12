@@ -204,3 +204,7 @@ func (r *roleCityService) GetMainCity(id int) *data.MapRoleCity {
 	}
 	return nil
 }
+
+func (r *roleCityService) GetCityCost(id int) int8 {
+	return CityFacilityService.GetCost(id) + gameConfig.Basic.City.Cost
+}

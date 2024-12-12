@@ -34,7 +34,7 @@ func (g *generalService) GetGenerals(rid int) ([]model.General, error) {
 			}
 			cfgId := general.General.Rand()
 			if cfgId != 0 {
-				gen, err := g.newGeneral(cfgId, rid, 0)
+				gen, err := g.newGeneral(cfgId, rid, 1)
 				if err != nil {
 					log.Println("武将生成出错", err)
 					continue
@@ -110,4 +110,17 @@ func (g *generalService) newGeneral(cfgId int, rid int, level int8) (*data.Gener
 		return nil, common.New(constant.DBError, "武将插入出错")
 	}
 	return gen, nil
+}
+
+func (g *generalService) Get(id int) (*data.General, bool) {
+	gen := &data.General{}
+	ok, err := db.Engine.Table(new(data.General)).Where("id=? and state=?", id, data.GeneralNormal).Get(gen)
+	if err != nil {
+		log.Println(err)
+		return nil, false
+	}
+	if ok {
+		return gen, true
+	}
+	return nil, false
 }

@@ -1,7 +1,11 @@
 package data
 
 import (
+	"Turing-Go/db"
 	"Turing-Go/server/game/model"
+	"encoding/json"
+	"fmt"
+	"github.com/go-xorm/xorm"
 	"time"
 )
 
@@ -19,6 +23,32 @@ const (
 	ArmyStop    = 0
 	ArmyRunning = 1
 )
+
+var ArmyDao = &armyDao{
+	armyChan: make(chan *Army, 100),
+}
+
+type armyDao struct {
+	armyChan chan *Army
+}
+
+func (d *armyDao) running() {
+	for {
+		select {
+		case army := <-d.armyChan:
+			if army.Id > 0 {
+				db.Engine.Table(army).ID(army.Id).Cols(
+					"soldiers", "generals", "conscript_times",
+					"conscript_cnts", "cmd", "from_x", "from_y", "to_x",
+					"to_y", "start", "end").Update(army)
+			}
+		}
+	}
+}
+
+func init() {
+	go ArmyDao.running()
+}
 
 // 军队
 type Army struct {
@@ -70,4 +100,85 @@ func (a *Army) ToModel() interface{} {
 	p.Start = a.Start.Unix()
 	p.End = a.End.Unix()
 	return p
+}
+
+func (a *Army) BeforeUpdate() {
+	a.beforeModify()
+}
+
+func (a *Army) beforeModify() {
+	data, _ := json.Marshal(a.GeneralArray)
+	a.Generals = string(data)
+
+	data, _ = json.Marshal(a.SoldierArray)
+	a.Soldiers = string(data)
+
+	data, _ = json.Marshal(a.ConscriptTimeArray)
+	a.ConscriptTimes = string(data)
+
+	data, _ = json.Marshal(a.ConscriptCntArray)
+	a.ConscriptCnts = string(data)
+}
+
+func (a *Army) BeforeInsert() {
+	a.beforeModify()
+}
+
+func (a *Army) AfterSet(name string, cell xorm.Cell) {
+	if name == "generals" {
+		a.GeneralArray = []int{0, 0, 0}
+		if cell != nil {
+			gs, ok := (*cell).([]uint8)
+			if ok {
+				json.Unmarshal(gs, &a.GeneralArray)
+				fmt.Println(a.GeneralArray)
+			}
+		}
+	} else if name == "soldiers" {
+		a.SoldierArray = []int{0, 0, 0}
+		if cell != nil {
+			ss, ok := (*cell).([]uint8)
+			if ok {
+				json.Unmarshal(ss, &a.SoldierArray)
+				fmt.Println(a.SoldierArray)
+			}
+		}
+	} else if name == "conscript_times" {
+		a.ConscriptTimeArray = []int64{0, 0, 0}
+		if cell != nil {
+			ss, ok := (*cell).([]uint8)
+			if ok {
+				json.Unmarshal(ss, &a.ConscriptTimeArray)
+				fmt.Println(a.ConscriptTimeArray)
+			}
+		}
+	} else if name == "conscript_cnts" {
+		a.ConscriptCntArray = []int{0, 0, 0}
+		if cell != nil {
+			ss, ok := (*cell).([]uint8)
+			if ok {
+				json.Unmarshal(ss, &a.ConscriptCntArray)
+				fmt.Println(a.ConscriptCntArray)
+			}
+		}
+	}
+}
+
+func (a *Army) PositionCanModify(pos int) bool {
+	if pos >= 3 || pos < 0 {
+		return false
+	}
+
+	if a.Cmd == ArmyCmdIdle {
+		return true
+	} else if a.Cmd == ArmyCmdConscript {
+		endTime := a.ConscriptTimeArray[pos]
+		return endTime == 0
+	} else {
+		return false
+	}
+}
+
+func (a *Army) SyncExecute() {
+	ArmyDao.armyChan <- a
 }

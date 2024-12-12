@@ -1,7 +1,9 @@
 package data
 
 import (
+	"Turing-Go/db"
 	"Turing-Go/server/game/model"
+	"log"
 	"time"
 )
 
@@ -11,6 +13,37 @@ const (
 	GeneralConvert     = 2 //转换
 )
 const SkillLimit = 3
+
+var GeneralDao = &generalDao{
+	generalChan: make(chan *General, 100),
+}
+
+type generalDao struct {
+	generalChan chan *General
+}
+
+func (d *generalDao) running() {
+	for {
+		select {
+		case gen := <-d.generalChan:
+			if gen.Id > 0 {
+				_, err := db.Engine.Table(gen).ID(gen.Id).Cols(
+					"level", "exp", "order", "cityId",
+					"physical_power", "star_lv", "has_pr_point",
+					"use_pr_point", "force_added", "strategy_added",
+					"defense_added", "speed_added", "destroy_added",
+					"parentId", "compose_type", "skills", "state").Update(gen)
+				if err != nil {
+					log.Println("generalDao running error", err)
+				}
+			}
+		}
+	}
+}
+
+func init() {
+	go GeneralDao.running()
+}
 
 type General struct {
 	Id            int             `xorm:"id pk autoincr"`
@@ -67,4 +100,8 @@ func (g *General) ToModel() interface{} {
 	p.ParentId = g.ParentId
 	p.Skills = g.SkillsArray
 	return p
+}
+
+func (g *General) SyncExecute() {
+	GeneralDao.generalChan <- g
 }

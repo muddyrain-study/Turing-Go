@@ -78,3 +78,12 @@ func (g *general) Rand() int {
 	}
 	return 0
 }
+
+func (g *general) Cost(cfgId int) int8 {
+	c, ok := g.GMap[cfgId]
+	if ok {
+		return c.Cost
+	} else {
+		return 0
+	}
+}
