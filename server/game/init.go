@@ -24,6 +24,8 @@ func Init() {
 	logic.RoleBuildService.Load()
 	logic.RoleCityService.Load()
 	logic.RoleAttrService.Load()
+	logic.RoleResService.Load()
+
 	initRouter()
 }
 

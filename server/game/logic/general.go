@@ -8,16 +8,42 @@ import (
 	"Turing-Go/server/game/gameConfig/general"
 	"Turing-Go/server/game/model"
 	"Turing-Go/server/game/model/data"
+	"Turing-Go/utils"
 	"encoding/json"
 	"log"
+	"sync"
 	"time"
 )
 
-var GeneralService = &generalService{}
-
-type generalService struct {
+var GeneralService = &generalService{
+	genByRole: make(map[int][]*data.General),
+	genByGId:  make(map[int]*data.General),
 }
 
+type generalService struct {
+	mutex     sync.RWMutex
+	genByRole map[int][]*data.General
+	genByGId  map[int]*data.General
+}
+
+func (g *generalService) Load() {
+	err := db.Engine.Table(data.General{}).Where("state=?",
+		data.GeneralNormal).Find(g.genByGId)
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	for _, v := range g.genByGId {
+		if _, ok := g.genByRole[v.RId]; ok == false {
+			g.genByRole[v.RId] = make([]*data.General, 0)
+		}
+		g.genByRole[v.RId] = append(g.genByRole[v.RId], v)
+	}
+
+	go g.updatePhysicalPower()
+}
 func (g *generalService) GetGenerals(rid int) ([]model.General, error) {
 	mrs := make([]*data.General, 0)
 	mr := &data.General{}
@@ -123,4 +149,23 @@ func (g *generalService) Get(id int) (*data.General, bool) {
 		return gen, true
 	}
 	return nil, false
+}
+
+func (g *generalService) updatePhysicalPower() {
+	limit := gameConfig.Basic.General.PhysicalPowerLimit
+	recoverCnt := gameConfig.Basic.General.RecoveryPhysicalPower
+	for {
+		time.Sleep(1 * time.Hour)
+		g.mutex.RLock()
+		for _, gen := range g.genByGId {
+			if gen.PhysicalPower < limit {
+				gen.PhysicalPower = utils.MinInt(limit, gen.PhysicalPower+recoverCnt)
+				if gen.PhysicalPower > limit {
+					gen.PhysicalPower = limit
+				}
+				gen.SyncExecute()
+			}
+		}
+		g.mutex.RUnlock()
+	}
 }

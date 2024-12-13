@@ -214,3 +214,25 @@ func (c *cityFacilityService) GetCost(cid int) int8 {
 	}
 	return int8(cost)
 }
+
+func (c *cityFacilityService) GetCapacity(rid int) int {
+	cfs, err := c.GetByRId(rid)
+	var cap int
+	if err != nil {
+		for _, cf := range cfs {
+			for _, f := range cf.Facility() {
+				if f.GetLevel() > 0 {
+					values := gameConfig.FacilityConf.GetValues(f.Type, f.GetLevel())
+					additions := gameConfig.FacilityConf.GetAdditions(f.Type)
+					for i, aType := range additions {
+						if aType == gameConfig.TypeWarehouseLimit {
+							cap += values[i]
+						}
+					}
+				}
+			}
+		}
+		log.Println("cityFacilityService GetYield err", err)
+	}
+	return cap
+}

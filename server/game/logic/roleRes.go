@@ -5,11 +5,27 @@ import (
 	"Turing-Go/server/game/gameConfig"
 	"Turing-Go/server/game/model/data"
 	"log"
+	"time"
 )
 
-var RoleResService = &roleResService{}
+var RoleResService = &roleResService{
+	rolesRes: make(map[int]*data.RoleRes),
+}
 
 type roleResService struct {
+	rolesRes map[int]*data.RoleRes
+}
+
+func (r *roleResService) Load() {
+	rr := make([]*data.RoleRes, 0)
+	err := db.Engine.Find(&rr)
+	if err != nil {
+		log.Println("加载角色资源异常", err)
+	}
+	for _, v := range rr {
+		r.rolesRes[v.RId] = v
+	}
+	go r.produce()
 }
 
 func (r *roleResService) GetRoleRes(rid int) *data.RoleRes {
@@ -69,4 +85,39 @@ func (r *roleResService) TryUseNeed(rid int, need gameConfig.NeedRes) bool {
 	} else {
 		return false
 	}
+}
+
+func (r *roleResService) produce() {
+	for {
+		// 一直获取产量 隔一段时间获取
+		recoveryTime := gameConfig.Basic.Role.RecoveryTime
+		time.Sleep(time.Duration(recoveryTime) * time.Second)
+		var index int
+		for _, v := range r.rolesRes {
+			capacity := r.getDepotCapacity(v.RId)
+			yield := r.GetYield(v.RId)
+			if v.Wood < capacity {
+				v.Wood += yield.Wood / 6
+			}
+			if v.Iron < capacity {
+				v.Iron += yield.Iron / 6
+			}
+			if v.Stone < capacity {
+				v.Stone += yield.Stone / 6
+			}
+			if v.Grain < capacity {
+				v.Grain += yield.Grain / 6
+			}
+			if index%6 == 0 {
+				if v.Decree < gameConfig.Basic.Role.Decree {
+					v.Decree += 1
+				}
+			}
+			v.SyncExecute()
+		}
+	}
+}
+
+func (r *roleResService) getDepotCapacity(rid int) int {
+	return CityFacilityService.GetCapacity(rid) + gameConfig.Basic.Role.DepotCapacity
 }
